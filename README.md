@@ -379,6 +379,36 @@ Statistics are printed:
 4. **Symbol Validation**: Checks if symbol is tradeable before trading
 5. **Spread Warning**: Alerts if spread is unusually high
 
+## 🔄 System Flow
+
+For a detailed explanation of how the EA works, including complete flow diagrams, filter explanations, and trade management logic, see:
+
+**[SYSTEM_FLOW.md](SYSTEM_FLOW.md)** - Complete system flow diagram and detailed explanations
+
+This document covers:
+- Complete flow diagram from tick to trade placement
+- All 13 filters explained in detail
+- Timing system and session management
+- SMC entry logic (Bias, Sweep, CHOCH, FVG)
+- Risk management calculations
+- Trade management (break-even, trailing stops)
+- Configuration parameters
+
+## 🔄 System Flow
+
+For a detailed explanation of how the EA works, including complete flow diagrams, filter explanations, and trade management logic, see:
+
+**[SYSTEM_FLOW.md](SYSTEM_FLOW.md)** - Complete system flow diagram and detailed explanations
+
+This document covers:
+- Complete flow diagram from tick to trade placement
+- All 13 filters explained in detail
+- Timing system and session management
+- SMC entry logic (Bias, Sweep, CHOCH, FVG)
+- Risk management calculations
+- Trade management (break-even, trailing stops)
+- Configuration parameters
+
 ## 🚀 Future Improvements
 
 The following enhancements are planned for future versions:

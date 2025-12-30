@@ -66,9 +66,30 @@ bool IsVolatilityAcceptable()
     // Convert ATR to pips
     double atrPips = atr / point / 10;
     
-    // Acceptable range: 10-100 pips (adjustable)
-    if(atrPips < 10) return false; // Too low volatility
-    if(atrPips > 100) return false; // Too high volatility
+    // Use configurable range from main file
+    if(g_ATR_MinPips > 0 && atrPips < g_ATR_MinPips) 
+    {
+        static datetime lastLog = 0;
+        if(TimeCurrent() - lastLog > 3600) // Log once per hour
+        {
+            LogTrade("Volatility filter: ATR too low (" + DoubleToString(atrPips, 1) + 
+                    " pips, minimum: " + DoubleToString(g_ATR_MinPips, 1) + " pips)");
+            lastLog = TimeCurrent();
+        }
+        return false; // Too low volatility
+    }
+    
+    if(g_ATR_MaxPips > 0 && atrPips > g_ATR_MaxPips) 
+    {
+        static datetime lastLog2 = 0;
+        if(TimeCurrent() - lastLog2 > 3600) // Log once per hour
+        {
+            LogTrade("Volatility filter: ATR too high (" + DoubleToString(atrPips, 1) + 
+                    " pips, maximum: " + DoubleToString(g_ATR_MaxPips, 1) + " pips)");
+            lastLog2 = TimeCurrent();
+        }
+        return false; // Too high volatility
+    }
     
     return true;
 }
