@@ -1,0 +1,37 @@
+# MetaTrader 4
+*.ex4
+*.mqh.bak
+*.mq4.bak
+mqlcache.dat
+
+# Compiled files
+*.ex4
+
+# Backup files
+*.bak
+*~
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Presets (user-specific settings)
+*.set
+
+# Documentation build
+docs/_build/
+
