@@ -3,22 +3,10 @@
 // Volume, Momentum, Support/Resistance
 // ============================================
 
-// Filter settings
-bool g_EnableVolumeFilter = true;
-bool g_EnableMomentumFilter = true;
-bool g_EnableSRFilter = true;
-
-// Volume filter parameters
-int g_VolumePeriod = 20; // Period for average volume calculation
-double g_VolumeMultiplier = 1.2; // Volume must be X times average
-
-// Momentum filter parameters
-int g_MomentumPeriod = 14; // RSI period
-int g_MomentumLevel = 50; // RSI level (above = bullish momentum, below = bearish)
-
-// Support/Resistance parameters
-int g_SRLookback = 50; // Bars to look back for S/R levels
-double g_SRBufferPips = 20; // Buffer in pips to avoid S/R levels
+// Filter settings (using globals from main file)
+// g_EnableVolumeFilter, g_EnableMomentumFilter, g_EnableSRFilter are set in main file
+// g_VolumePeriod, g_VolumeMultiplier, g_MomentumPeriod, g_MomentumLevel
+// g_SRLookback, g_SRBufferPips are set in main file
 
 // Check volume confirmation
 bool CheckVolumeConfirmation()
@@ -49,7 +37,7 @@ bool CheckMomentumConfirmation(BiasType bias)
 {
     if(!g_EnableMomentumFilter) return true;
     
-    // Get RSI value
+    // Get RSI value - MQL4 syntax
     double rsi = iRSI(Symbol(), PERIOD_M5, g_MomentumPeriod, PRICE_CLOSE, 0);
     
     if(rsi <= 0) return true; // Can't calculate, allow trade
@@ -86,25 +74,25 @@ double FindNearestSR(bool findSupport, int lookback)
             level = iLow(Symbol(), PERIOD_H1, i);
             
             // Check if it's a swing low (lower than surrounding bars)
-            bool isSwing = true;
-            for(int j = 1; j <= 3 && (i + j) < iBars(Symbol(), PERIOD_H1); j++)
+            bool isSwingLow = true;
+            for(int j1 = 1; j1 <= 3 && (i + j1) < iBars(Symbol(), PERIOD_H1); j1++)
             {
-                if(iLow(Symbol(), PERIOD_H1, i + j) < level)
+                if(iLow(Symbol(), PERIOD_H1, i + j1) < level)
                 {
-                    isSwing = false;
+                    isSwingLow = false;
                     break;
                 }
             }
-            for(int j = 1; j <= 3 && (i - j) >= 0; j++)
+            for(int j2 = 1; j2 <= 3 && (i - j2) >= 0; j2++)
             {
-                if(iLow(Symbol(), PERIOD_H1, i - j) < level)
+                if(iLow(Symbol(), PERIOD_H1, i - j2) < level)
                 {
-                    isSwing = false;
+                    isSwingLow = false;
                     break;
                 }
             }
             
-            if(!isSwing) continue;
+            if(!isSwingLow) continue;
         }
         else
         {
@@ -112,25 +100,25 @@ double FindNearestSR(bool findSupport, int lookback)
             level = iHigh(Symbol(), PERIOD_H1, i);
             
             // Check if it's a swing high
-            bool isSwing = true;
-            for(int j = 1; j <= 3 && (i + j) < iBars(Symbol(), PERIOD_H1); j++)
+            bool isSwingHigh = true;
+            for(int j3 = 1; j3 <= 3 && (i + j3) < iBars(Symbol(), PERIOD_H1); j3++)
             {
-                if(iHigh(Symbol(), PERIOD_H1, i + j) > level)
+                if(iHigh(Symbol(), PERIOD_H1, i + j3) > level)
                 {
-                    isSwing = false;
+                    isSwingHigh = false;
                     break;
                 }
             }
-            for(int j = 1; j <= 3 && (i - j) >= 0; j++)
+            for(int j4 = 1; j4 <= 3 && (i - j4) >= 0; j4++)
             {
-                if(iHigh(Symbol(), PERIOD_H1, i - j) > level)
+                if(iHigh(Symbol(), PERIOD_H1, i - j4) > level)
                 {
-                    isSwing = false;
+                    isSwingHigh = false;
                     break;
                 }
             }
             
-            if(!isSwing) continue;
+            if(!isSwingHigh) continue;
         }
         
         // Calculate distance

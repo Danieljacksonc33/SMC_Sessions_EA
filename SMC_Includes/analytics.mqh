@@ -104,11 +104,11 @@ void UpdateAnalytics(int ticket, string sessionName)
     
     // Update session stats
     int sessionIdx = -1;
-    for(int i = 0; i < g_SessionStatsCount; i++)
+    for(int sessIdx = 0; sessIdx < g_SessionStatsCount; sessIdx++)
     {
-        if(g_SessionAnalytics[i].sessionName == sessionName)
+        if(g_SessionAnalytics[sessIdx].sessionName == sessionName)
         {
-            sessionIdx = i;
+            sessionIdx = sessIdx;
             break;
         }
     }
@@ -147,11 +147,11 @@ void UpdateAnalytics(int ticket, string sessionName)
     
     // Update pair stats
     int pairIdx = -1;
-    for(int i = 0; i < g_PairStatsCount; i++)
+    for(int pairLoopIdx = 0; pairLoopIdx < g_PairStatsCount; pairLoopIdx++)
     {
-        if(g_PairAnalytics[i].symbol == symbol)
+        if(g_PairAnalytics[pairLoopIdx].symbol == symbol)
         {
-            pairIdx = i;
+            pairIdx = pairLoopIdx;
             break;
         }
     }
@@ -231,14 +231,14 @@ void PrintDetailedAnalytics()
     if(g_SessionStatsCount > 0)
     {
         report += "--- SESSION STATISTICS ---\n";
-        for(int i = 0; i < g_SessionStatsCount; i++)
+        for(int sessStatIdx = 0; sessStatIdx < g_SessionStatsCount; sessStatIdx++)
         {
-            report += g_SessionAnalytics[i].sessionName + ":\n";
-            report += "  Trades: " + IntegerToString(g_SessionAnalytics[i].trades) + "\n";
-            report += "  Wins: " + IntegerToString(g_SessionAnalytics[i].wins) + 
-                     " | Losses: " + IntegerToString(g_SessionAnalytics[i].losses) + "\n";
-            report += "  Win Rate: " + DoubleToString(g_SessionAnalytics[i].winRate, 2) + "%\n";
-            report += "  P/L: " + DoubleToString(g_SessionAnalytics[i].profit - g_SessionAnalytics[i].loss, 2) + "\n";
+            report += g_SessionAnalytics[sessStatIdx].sessionName + ":\n";
+            report += "  Trades: " + IntegerToString(g_SessionAnalytics[sessStatIdx].trades) + "\n";
+            report += "  Wins: " + IntegerToString(g_SessionAnalytics[sessStatIdx].wins) + 
+                     " | Losses: " + IntegerToString(g_SessionAnalytics[sessStatIdx].losses) + "\n";
+            report += "  Win Rate: " + DoubleToString(g_SessionAnalytics[sessStatIdx].winRate, 2) + "%\n";
+            report += "  P/L: " + DoubleToString(g_SessionAnalytics[sessStatIdx].profit - g_SessionAnalytics[sessStatIdx].loss, 2) + "\n";
             report += "\n";
         }
     }
@@ -247,14 +247,14 @@ void PrintDetailedAnalytics()
     if(g_PairStatsCount > 0)
     {
         report += "--- PAIR STATISTICS ---\n";
-        for(int i = 0; i < g_PairStatsCount; i++)
+        for(int pairStatIdx = 0; pairStatIdx < g_PairStatsCount; pairStatIdx++)
         {
-            report += g_PairAnalytics[i].symbol + ":\n";
-            report += "  Trades: " + IntegerToString(g_PairAnalytics[i].trades) + "\n";
-            report += "  Wins: " + IntegerToString(g_PairAnalytics[i].wins) + 
-                     " | Losses: " + IntegerToString(g_PairAnalytics[i].losses) + "\n";
-            report += "  Win Rate: " + DoubleToString(g_PairAnalytics[i].winRate, 2) + "%\n";
-            report += "  P/L: " + DoubleToString(g_PairAnalytics[i].profit - g_PairAnalytics[i].loss, 2) + "\n";
+            report += g_PairAnalytics[pairStatIdx].symbol + ":\n";
+            report += "  Trades: " + IntegerToString(g_PairAnalytics[pairStatIdx].trades) + "\n";
+            report += "  Wins: " + IntegerToString(g_PairAnalytics[pairStatIdx].wins) + 
+                     " | Losses: " + IntegerToString(g_PairAnalytics[pairStatIdx].losses) + "\n";
+            report += "  Win Rate: " + DoubleToString(g_PairAnalytics[pairStatIdx].winRate, 2) + "%\n";
+            report += "  P/L: " + DoubleToString(g_PairAnalytics[pairStatIdx].profit - g_PairAnalytics[pairStatIdx].loss, 2) + "\n";
             report += "\n";
         }
     }

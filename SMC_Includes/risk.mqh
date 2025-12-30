@@ -149,6 +149,9 @@ bool PlaceTrade(BiasType bias)
     // Check result
     if(ticket > 0)
     {
+        // Send alert with order details
+        string orderTypeStr = (bias == BULLISH) ? "BUY LIMIT" : "SELL LIMIT";
+        AlertTradePlaced(orderTypeStr, lotSize, FVGEntry, stopLoss, takeProfit);
         return true;
     }
     else

@@ -50,6 +50,29 @@ void UpdateStatistics(int ticket)
     
     double profit = OrderProfit() + OrderSwap() + OrderCommission();
     
+    // Calculate profit in pips for alert
+    double profitPips = 0;
+    double point = Point;
+    if(OrderType() == OP_BUY)
+        profitPips = ((OrderClosePrice() - OrderOpenPrice()) / point / 10);
+    else if(OrderType() == OP_SELL)
+        profitPips = ((OrderOpenPrice() - OrderClosePrice()) / point / 10);
+    
+    // Determine close reason
+    string closeReason = "Unknown";
+    if(OrderClosePrice() == OrderTakeProfit())
+        closeReason = "Take Profit";
+    else if(OrderClosePrice() == OrderStopLoss())
+        closeReason = "Stop Loss";
+    else
+        closeReason = "Manual/Other";
+    
+    // Get order type string
+    string orderTypeStr = (OrderType() == OP_BUY) ? "BUY" : "SELL";
+    
+    // Send alert
+    AlertTradeClosed(ticket, orderTypeStr, profit, profitPips, closeReason);
+    
     MqlDateTime dt;
     TimeToStruct(TimeCurrent(), dt);
     dt.hour = 0;

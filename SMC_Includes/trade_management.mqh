@@ -97,6 +97,7 @@ void ManageTrades()
                 {
                     LogTrade("Break-even moved: Ticket " + IntegerToString(OrderTicket()) + 
                             " at " + DoubleToString(profitPips, 1) + " pips");
+                    AlertBreakEven(OrderTicket(), profitPips);
                 }
             }
         }

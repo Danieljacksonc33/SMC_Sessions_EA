@@ -1,6 +1,6 @@
-# SMC Sessions Expert Advisor (EA)
+# SMC Sessions Expert Advisor (EA) - Enhanced Edition
 
-A sophisticated MetaTrader 4 Expert Advisor implementing Smart Money Concepts (SMC) trading strategy with session-based analysis, liquidity sweeps, change of character (CHOCH) detection, and Fair Value Gap (FVG) entries.
+A sophisticated MetaTrader 4 Expert Advisor implementing Smart Money Concepts (SMC) trading strategy with session-based analysis, liquidity sweeps, change of character (CHOCH) detection, Fair Value Gap (FVG) entries, and comprehensive alert system.
 
 ## 📋 Table of Contents
 
@@ -9,10 +9,12 @@ A sophisticated MetaTrader 4 Expert Advisor implementing Smart Money Concepts (S
 - [Strategy Logic](#strategy-logic)
 - [Installation](#installation)
 - [Configuration](#configuration)
+- [Alert System](#alert-system)
 - [Usage Guide](#usage-guide)
 - [File Structure](#file-structure)
 - [Requirements](#requirements)
 - [Performance Features](#performance-features)
+- [Future Improvements](#future-improvements)
 - [Troubleshooting](#troubleshooting)
 - [License](#license)
 
@@ -25,11 +27,15 @@ The SMC Sessions EA is an automated trading system that combines Smart Money Con
 3. **Liquidity Sweeps**: Detects when price breaks Asian session highs/lows
 4. **Change of Character (CHOCH)**: Identifies structural breaks in market direction
 5. **Fair Value Gap (FVG)**: Finds price inefficiencies for optimal entry points
+6. **Market Condition Filters**: ADX-based trend detection and volatility filters
+7. **Entry Confirmations**: Volume, momentum (RSI), and support/resistance filters
+8. **Comprehensive Alerts**: Popup, email, and push notifications
 
 ## ✨ Features
 
 ### Core Trading Features
 - ✅ **Session-Based Trading**: Trades only during specified hours (default: 2-5 AM CST)
+- ✅ **Multiple Session Support**: Trade during multiple time windows (Asian, London, NY sessions)
 - ✅ **Multi-Timeframe Analysis**: Uses M5, H1, H4, and D1 for comprehensive market analysis
 - ✅ **Smart Entry System**: FVG-based entries at 50% retracement
 - ✅ **Risk Management**: Dynamic lot sizing based on account risk percentage
@@ -38,15 +44,30 @@ The SMC Sessions EA is an automated trading system that combines Smart Money Con
 ### Advanced Features
 - ✅ **Active Trade Management**: Break-even moves, trailing stops, partial closes
 - ✅ **Performance Statistics**: Real-time tracking of win rate, profit factor, drawdown
+- ✅ **Enhanced Analytics**: Session-based and pair-based performance tracking
 - ✅ **Safety Features**: Daily loss limits, max drawdown protection, max trades per day
 - ✅ **Symbol Validation**: Checks if symbol is tradeable before trading
 - ✅ **Magic Number System**: Unique trade identification for multiple EA instances
+
+### Market Condition Filters
+- ✅ **Trend Detection**: ADX-based filter to trade only in trending markets
+- ✅ **Volatility Filter**: ATR-based filter to avoid low/high volatility conditions
+- ✅ **Volume Confirmation**: Ensures sufficient volume before entry
+- ✅ **Momentum Filter**: RSI-based confirmation aligned with bias
+- ✅ **Support/Resistance Filter**: Avoids entries too close to key S/R levels
+
+### Alert System
+- ✅ **Popup Alerts**: Desktop notifications with sound
+- ✅ **Email Alerts**: Configurable email notifications
+- ✅ **Push Notifications**: Mobile app push notifications
+- ✅ **Event Types**: Sweep alerts, trade placement, break-even, trade closure
 
 ### Technical Features
 - ✅ **Cached Calculations**: Efficient Asian range calculation (once per day)
 - ✅ **Swing Point Detection**: Advanced CHOCH detection using actual swing highs/lows
 - ✅ **MQL4 Compatible**: Fully optimized for MetaTrader 4
 - ✅ **Modular Code**: Clean, organized codebase with separate modules
+- ✅ **Backtesting Support**: Enhanced Strategy Tester compatibility
 
 ## 🧠 Strategy Logic
 
@@ -68,7 +89,14 @@ The SMC Sessions EA is an automated trading system that combines Smart Money Con
 5. Calculate Fair Value Gap (FVG)
    └─> Identify price gap between 3 candles
 
-6. Place Limit Order
+6. Market Condition Filters
+   └─> Check ADX (trending market)
+   └─> Check ATR (acceptable volatility)
+   └─> Check Volume (above average)
+   └─> Check RSI (momentum confirmation)
+   └─> Check S/R levels (not too close)
+
+7. Place Limit Order
    └─> Entry at 50% of FVG
    └─> Stop Loss: Asian range ± buffer
    └─> Take Profit: 1:1 extension from Asian range
@@ -81,6 +109,11 @@ The SMC Sessions EA is an automated trading system that combines Smart Money Con
 - ✅ Valid CHOCH detected
 - ✅ FVG identified and validated
 - ✅ Within trading session hours
+- ✅ Market is trending (if filter enabled)
+- ✅ Volatility is acceptable (if filter enabled)
+- ✅ Volume confirmation passed (if filter enabled)
+- ✅ Momentum confirmation passed (if filter enabled)
+- ✅ Not too close to S/R levels (if filter enabled)
 - ✅ Max trades per day not reached
 - ✅ Safety checks passed
 
@@ -119,6 +152,7 @@ The SMC Sessions EA is an automated trading system that combines Smart Money Con
 
 ### Input Parameters
 
+#### Basic Settings
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `MagicNumber` | 123456 | Unique identifier for EA trades |
@@ -127,12 +161,61 @@ The SMC Sessions EA is an automated trading system that combines Smart Money Con
 | `SessionEndHour` | 5 | Trading session end (CST hour, 0-23) |
 | `StopBufferPips` | 5 | Stop loss buffer in pips |
 | `MaxTradesPerDay` | 1 | Maximum trades per day per symbol |
+| `TimezoneOffset` | -8 | Timezone offset (CST = -8) |
+
+#### Multiple Sessions
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `EnableMultiSessions` | false | Enable multiple trading sessions |
+| `MultiSession1_Enabled` | true | Session 1 (default: 2-5 AM) |
+| `MultiSession2_Enabled` | false | Session 2 (London: 8-11 AM) |
+| `MultiSession3_Enabled` | false | Session 3 (NY: 2-5 PM) |
+| `MultiSession4_Enabled` | false | Session 4 (custom) |
+| `MultiSession5_Enabled` | false | Session 5 (custom) |
+
+#### Market Filters
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `EnableMarketFilter` | true | Enable market condition filter |
+| `TradeOnlyTrending` | true | Only trade in trending markets |
+| `ADX_Period` | 14 | ADX period for trend detection |
+| `ADX_Level` | 25 | ADX level (above = trending) |
+| `ATR_Period` | 14 | ATR period for volatility |
+
+#### Entry Filters
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `EnableVolumeFilter` | true | Enable volume confirmation |
+| `VolumePeriod` | 20 | Period for average volume |
+| `VolumeMultiplier` | 1.2 | Volume must be X times average |
+| `EnableMomentumFilter` | true | Enable momentum (RSI) filter |
+| `MomentumPeriod` | 14 | RSI period |
+| `MomentumLevel` | 50 | RSI level threshold |
+| `EnableSRFilter` | true | Enable support/resistance filter |
+| `SRLookback` | 50 | Bars to look back for S/R |
+| `SRBufferPips` | 20 | Buffer in pips to avoid S/R |
+
+#### Trade Management
+| Parameter | Default | Description |
+|-----------|---------|-------------|
 | `EnableTradeManagement` | true | Enable break-even & trailing stops |
 | `EnableStatistics` | true | Enable performance statistics |
+| `EnableAnalytics` | true | Enable enhanced analytics |
 | `EnableSafetyChecks` | true | Enable safety features |
 | `MaxDailyLossPercent` | 5.0 | Stop trading if daily loss > X% |
 | `MaxDrawdownPercent` | 10.0 | Stop trading if drawdown > X% |
-| `TimezoneOffset` | -8 | Timezone offset (CST = -8) |
+
+#### Alert System
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `EnableAlerts` | true | Enable alert system |
+| `AlertSweep` | true | Alert on liquidity sweep |
+| `AlertTradePlaced` | true | Alert when trade is placed |
+| `AlertBreakEven` | true | Alert when break-even is hit |
+| `AlertTradeClosed` | true | Alert when trade is closed |
+| `AlertPopup` | true | Show popup alerts |
+| `AlertEmail` | false | Send email alerts (requires setup) |
+| `AlertPush` | false | Send push notifications (requires mobile app) |
 
 ### Recommended Settings
 
@@ -140,16 +223,49 @@ The SMC Sessions EA is an automated trading system that combines Smart Money Con
 - Risk: 0.5%
 - Max Trades/Day: 1
 - Max Daily Loss: 3%
+- Market Filter: Enabled
+- All Entry Filters: Enabled
 
 **Moderate:**
 - Risk: 1.0%
 - Max Trades/Day: 2
 - Max Daily Loss: 5%
+- Market Filter: Enabled
+- Entry Filters: Volume + Momentum
 
 **Aggressive:**
 - Risk: 1.5%
 - Max Trades/Day: 3
 - Max Daily Loss: 7%
+- Market Filter: Optional
+- Entry Filters: Volume only
+
+## 🔔 Alert System
+
+### Setup Email Alerts
+
+1. In MT4: `Tools → Options → Email`
+2. Configure SMTP settings:
+   - **Gmail**: smtp.gmail.com, Port 587
+   - **Outlook**: smtp-mail.outlook.com, Port 587
+   - **Yahoo**: smtp.mail.yahoo.com, Port 587
+3. Test email connection
+4. Set `AlertEmail = true` in EA settings
+
+### Setup Push Notifications
+
+1. Install MetaTrader 4 mobile app (iOS/Android)
+2. Log in with your broker account
+3. Enable push notifications in app settings
+4. In MT4 desktop: `Tools → Options → Notifications → Enable push`
+5. Set `AlertPush = true` in EA settings
+
+### Alert Types
+
+- **Sweep Alert**: When liquidity sweep occurs (HIGH/LOW)
+- **Trade Placed**: When limit order is placed (with entry, SL, TP)
+- **Break-Even**: When stop loss moves to break-even
+- **Trade Closed**: When trade closes (with P/L and reason)
 
 ## 📖 Usage Guide
 
@@ -169,6 +285,21 @@ The SMC Sessions EA is an automated trading system that combines Smart Money Con
    - Watch Experts tab for log messages
    - Check Terminal for open trades
    - Review statistics (printed daily)
+   - Receive alerts for key events
+
+### Multiple Sessions Setup
+
+To trade during multiple sessions:
+
+1. Set `EnableMultiSessions = true`
+2. Enable desired sessions (Session 1, 2, 3, etc.)
+3. Set start/end hours for each session
+4. EA will trade during any enabled session
+
+Example:
+- Session 1: 2-5 AM (Asian)
+- Session 2: 8-11 AM (London)
+- Session 3: 2-5 PM (New York)
 
 ### Multiple Pairs
 
@@ -179,33 +310,6 @@ The EA can run on multiple pairs simultaneously:
 3. Or use different Magic Numbers to track separately
 4. Each pair has independent trade limits
 
-### Trade Management Settings
-
-**Break-Even:**
-- Moves stop loss to entry + 5 pips after 20 pips profit
-- Enabled by default
-
-**Trailing Stop:**
-- Activates after break-even
-- Trails by 15 pips with 5 pip step
-- Enabled by default
-
-**Partial Close:**
-- Closes 50% of position at 30 pips profit
-- Disabled by default (can be enabled in code)
-
-### Timezone Configuration
-
-The EA uses CST (Central Standard Time) by default. To adjust:
-
-1. Find your timezone offset from UTC
-2. Set `TimezoneOffset` parameter:
-   - EST: -5
-   - CST: -8 (default)
-   - PST: -8
-   - GMT: 0
-   - For other timezones, calculate: `(Your UTC offset) - (CST offset)`
-
 ## 📁 File Structure
 
 ```
@@ -213,6 +317,7 @@ SMC_Sessions_EA/
 ├── SMC_Session_EA.mq4          # Main EA file
 ├── SMC_Includes/               # Include files folder
 │   ├── session.mqh             # Session management & Asian range
+│   ├── multi_session.mqh        # Multiple session support
 │   ├── bias.mqh                # Higher timeframe bias detection
 │   ├── liquidity.mqh           # Liquidity sweep detection
 │   ├── structure.mqh           # CHOCH detection
@@ -221,9 +326,15 @@ SMC_Sessions_EA/
 │   ├── logger.mqh               # Logging functions
 │   ├── trade_management.mqh    # Break-even, trailing stops
 │   ├── statistics.mqh           # Performance statistics
-│   └── safety.mqh               # Safety features
+│   ├── safety.mqh               # Safety features
+│   ├── market_filter.mqh       # Market condition filters
+│   ├── entry_filters.mqh       # Entry confirmation filters
+│   ├── analytics.mqh            # Enhanced analytics
+│   ├── backtesting.mqh         # Backtesting enhancements
+│   └── alerts.mqh               # Alert system
 ├── README.md                    # This file
-└── USAGE_GUIDE.md              # Detailed usage guide
+├── USAGE_GUIDE.md              # Detailed usage guide
+└── INSTALLATION.md             # Installation instructions
 ```
 
 ## 🔧 Requirements
@@ -244,12 +355,21 @@ The EA tracks and displays:
 - Profit factor
 - Max drawdown (%)
 - Daily performance
+- Session-based performance
+- Pair-based performance
 
 Statistics are printed:
 - On initialization
 - After each trade
 - At end of day
 - On EA removal
+
+### Enhanced Analytics
+
+- **Session Analytics**: Performance breakdown by trading session
+- **Pair Analytics**: Performance breakdown by currency pair
+- **Overall Metrics**: Comprehensive statistics across all trades
+- **Backtesting Reports**: Detailed reports for Strategy Tester
 
 ### Safety Features
 
@@ -258,6 +378,72 @@ Statistics are printed:
 3. **Max Trades Per Day**: Limits number of trades per symbol per day
 4. **Symbol Validation**: Checks if symbol is tradeable before trading
 5. **Spread Warning**: Alerts if spread is unusually high
+
+## 🚀 Future Improvements
+
+The following enhancements are planned for future versions:
+
+### Trading Strategy Enhancements
+- [ ] **Order Block Detection**: Identify institutional order blocks for entries
+- [ ] **Imbalance Detection**: Enhanced FVG detection with quality scoring
+- [ ] **Market Structure Analysis**: Advanced structure break detection
+- [ ] **Liquidity Pool Identification**: Automatic liquidity zone detection
+- [ ] **Multi-Pair Correlation**: Trade based on currency correlation
+- [ ] **News Filter**: Avoid trading during high-impact news events
+- [ ] **Session Strength Indicator**: Weight trades by session strength
+
+### Risk Management
+- [ ] **Dynamic Position Sizing**: Kelly Criterion or volatility-based sizing
+- [ ] **Correlation-Based Risk**: Adjust risk for correlated pairs
+- [ ] **Time-Based Risk**: Adjust risk based on time of day/week
+- [ ] **Drawdown Recovery**: Automatic risk reduction during drawdown
+- [ ] **Profit Target Scaling**: Multiple take profit levels
+
+### Trade Management
+- [ ] **Partial Profit Taking**: Multiple TP levels with partial closes
+- [ ] **Trailing Stop Optimization**: Adaptive trailing stop based on volatility
+- [ ] **Break-Even Optimization**: Dynamic break-even based on ATR
+- [ ] **Trade Correlation Management**: Close correlated trades together
+- [ ] **Time-Based Exits**: Exit trades at specific times
+
+### Analytics & Reporting
+- [ ] **Web Dashboard**: Real-time web-based performance dashboard
+- [ ] **Trade Journal Export**: Export trades to CSV/Excel
+- [ ] **Performance Attribution**: Analyze which filters contribute most
+- [ ] **Optimization Reports**: Detailed optimization analysis
+- [ ] **Risk Metrics**: Sharpe ratio, Sortino ratio, maximum adverse excursion
+
+### User Interface
+- [ ] **On-Chart Display**: Visual indicators on chart (FVG, sweeps, etc.)
+- [ ] **Settings Panel**: GUI for easy configuration
+- [ ] **Trade History Panel**: Visual trade history display
+- [ ] **Performance Dashboard**: Real-time performance metrics on chart
+
+### Technical Improvements
+- [ ] **MQL5 Version**: Full MQL5 port with object-oriented design
+- [ ] **Multi-Threading**: Parallel processing for multiple pairs
+- [ ] **Database Integration**: Store trades in external database
+- [ ] **API Integration**: Connect to external services (Telegram, Discord)
+- [ ] **Machine Learning**: ML-based entry/exit optimization
+
+### Alert Enhancements
+- [ ] **Telegram Bot**: Send alerts via Telegram
+- [ ] **Discord Webhooks**: Send alerts to Discord channels
+- [ ] **SMS Integration**: SMS alerts via third-party service
+- [ ] **Custom Alert Templates**: User-defined alert formats
+- [ ] **Alert Scheduling**: Quiet hours for alerts
+
+### Backtesting
+- [ ] **Monte Carlo Simulation**: Risk analysis with Monte Carlo
+- [ ] **Walk-Forward Analysis**: Automated walk-forward optimization
+- [ ] **Out-of-Sample Testing**: Automatic OOS validation
+- [ ] **Multi-Currency Backtesting**: Test across multiple pairs simultaneously
+
+### Integration
+- [ ] **MyFXBook Integration**: Automatic trade upload
+- [ ] **TradingView Integration**: Sync with TradingView signals
+- [ ] **cTrader Support**: Port to cTrader platform
+- [ ] **Broker API Integration**: Direct broker API connection
 
 ## 🐛 Troubleshooting
 
@@ -270,6 +456,7 @@ Statistics are printed:
 - [ ] Max trades per day not reached
 - [ ] Safety checks not blocking (check Experts tab)
 - [ ] Market conditions meet all entry criteria
+- [ ] Market filters not blocking (check ADX, ATR, etc.)
 
 ### Compilation Errors
 
@@ -285,8 +472,22 @@ Statistics are printed:
 - No liquidity sweeps occurred
 - No valid CHOCH detected
 - No FVG formed
+- Market filters are blocking trades
 
 The EA is designed to wait for quality setups, not force trades.
+
+### Alerts Not Working
+
+**Email Alerts:**
+- Check SMTP settings in MT4 Options
+- Test email connection
+- Check spam folder
+- Verify firewall settings
+
+**Push Notifications:**
+- Ensure MT4 mobile app is installed and logged in
+- Check phone notifications are enabled
+- Verify MT4 desktop push notifications are enabled
 
 ### EA Stops Working
 
@@ -299,10 +500,11 @@ The EA is designed to wait for quality setups, not force trades.
 
 ## 📝 Notes
 
-- **Trading Hours**: EA trades during specified session (default: 2-5 AM CST)
-- **Trade Frequency**: Expect 0-3 trades per week (quality over quantity)
+- **Trading Hours**: EA trades during specified session(s) (default: 2-5 AM CST)
+- **Trade Frequency**: Expect 0-5 trades per week (quality over quantity)
 - **Timeframe**: EA uses multiple timeframes but can be attached to any chart
 - **24/7 Operation**: Requires computer/VPS to be on 24/7 for continuous operation
+- **Alert Frequency**: Alerts can be frequent during active trading; adjust settings as needed
 
 ## 🔒 Risk Warning
 
@@ -333,4 +535,3 @@ For issues, questions, or suggestions:
 **Happy Trading! 📈**
 
 *Remember: The best trading system is one that fits your risk tolerance and trading style. Always test thoroughly before live trading.*
-

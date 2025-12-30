@@ -24,12 +24,14 @@ void CheckLiquiditySweep()
     if(!SweepHighOccurred && prevHigh > AsiaHigh)
     {
         SweepHighOccurred = true;
+        AlertSweep("HIGH", prevHigh);
     }
     
     // Low sweep: price broke below Asian low
     if(!SweepLowOccurred && prevLow < AsiaLow)
     {
         SweepLowOccurred = true;
+        AlertSweep("LOW", prevLow);
     }
 }
 

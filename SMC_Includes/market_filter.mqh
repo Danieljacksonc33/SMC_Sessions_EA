@@ -5,23 +5,18 @@
 
 enum MarketCondition { MARKET_TRENDING, MARKET_CHOPPY, MARKET_UNKNOWN };
 
-// ADX parameters for trend detection
-int g_ADX_Period = 14;
-int g_ADX_Level = 25; // Above this = trending
-
-// ATR parameters for volatility
-int g_ATR_Period = 14;
-
-// Market condition filter
-bool g_EnableMarketFilter = true;
-bool g_TradeOnlyTrending = true; // If true, only trade in trending markets
+// ADX parameters for trend detection (using globals from main file)
+// g_ADX_Period, g_ADX_Level, g_ATR_Period are set in main file
+// g_EnableMarketFilter, g_TradeOnlyTrending are set in main file
 
 // Check market condition using ADX
 MarketCondition CheckMarketCondition()
 {
     if(!g_EnableMarketFilter) return MARKET_UNKNOWN;
     
-    // Get ADX value (trend strength indicator)
+    // Get ADX value (trend strength indicator) - MQL4 syntax
+    // iADX(symbol, timeframe, period, applied_price, mode, shift)
+    // For ADX, we use MODE_MAIN (the ADX line itself)
     double adx = iADX(Symbol(), PERIOD_H1, g_ADX_Period, PRICE_CLOSE, MODE_MAIN, 0);
     
     if(adx <= 0) return MARKET_UNKNOWN; // Not enough data
