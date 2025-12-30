@@ -246,6 +246,33 @@ The SMC Sessions EA is an automated trading system that combines Smart Money Con
 - Market Filter: Optional
 - Entry Filters: Volume only
 
+## ⭐ Visual Indicator
+
+The EA includes a visual indicator that shows a blinking star on the chart to confirm the EA is running and active.
+
+### How It Works
+
+- **Frequency**: Appears every 5 minutes
+- **Duration**: Stays visible for 20 seconds
+- **Behavior**: Blinks through 5 colors (Green → Yellow → Aqua → Magenta → Orange)
+- **Location**: Top area of the chart (above current price)
+- **Purpose**: Confirms EA is processing ticks and actively running
+
+### Configuration
+
+- **Enable/Disable**: Set `DeeJayStarIndicator = true/false` in EA inputs
+- **Default**: Enabled (true)
+- **Internal Name**: Object name is "SMC_EA_Heartbeat" (for chart object management)
+
+### When You'll See It
+
+- First appearance: Within 5 minutes of attaching the EA
+- Regular intervals: Every 5 minutes while EA is running
+- During active trading: Star appears regardless of trading session
+- When disabled: No star appears (EA still functions normally)
+
+This visual confirmation helps you know the EA is working even when no trades are being placed.
+
 ## 🔔 Alert System
 
 ### Setup Email Alerts
