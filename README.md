@@ -68,6 +68,7 @@ The SMC Sessions EA is an automated trading system that combines Smart Money Con
 - ✅ **MQL4 Compatible**: Fully optimized for MetaTrader 4
 - ✅ **Modular Code**: Clean, organized codebase with separate modules
 - ✅ **Backtesting Support**: Enhanced Strategy Tester compatibility
+- ✅ **Visual Indicator**: Blinking star indicator shows EA is running (every 5 minutes)
 
 ## 🧠 Strategy Logic
 
@@ -217,6 +218,11 @@ The SMC Sessions EA is an automated trading system that combines Smart Money Con
 | `AlertEmail` | false | Send email alerts (requires setup) |
 | `AlertPush` | false | Send push notifications (requires mobile app) |
 
+#### Visual Indicator
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `DeeJayStarIndicator` | true | Show blinking star indicator (appears every 5 min, stays 20 sec) |
+
 ### Recommended Settings
 
 **Conservative:**
@@ -280,12 +286,14 @@ The SMC Sessions EA is an automated trading system that combines Smart Money Con
 2. **Verify EA is Running**
    - Check for smiley face in top-right corner
    - Check Experts tab for initialization message
+   - Watch for blinking star indicator (appears every 5 minutes)
 
 3. **Monitor Performance**
    - Watch Experts tab for log messages
    - Check Terminal for open trades
    - Review statistics (printed daily)
    - Receive alerts for key events
+   - Observe blinking star indicator (confirms EA is active)
 
 ### Multiple Sessions Setup
 
@@ -331,7 +339,8 @@ SMC_Sessions_EA/
 │   ├── entry_filters.mqh       # Entry confirmation filters
 │   ├── analytics.mqh            # Enhanced analytics
 │   ├── backtesting.mqh         # Backtesting enhancements
-│   └── alerts.mqh               # Alert system
+│   ├── alerts.mqh               # Alert system
+│   └── visual_indicator.mqh     # Visual blinking star indicator
 ├── README.md                    # This file
 ├── USAGE_GUIDE.md              # Detailed usage guide
 └── INSTALLATION.md             # Installation instructions
@@ -429,6 +438,7 @@ The following enhancements are planned for future versions:
 - [ ] **Risk Metrics**: Sharpe ratio, Sortino ratio, maximum adverse excursion
 
 ### User Interface
+- [x] **Visual Indicator**: Blinking star indicator to show EA is running ✅
 - [ ] **On-Chart Display**: Visual indicators on chart (FVG, sweeps, etc.)
 - [ ] **Settings Panel**: GUI for easy configuration
 - [ ] **Trade History Panel**: Visual trade history display
