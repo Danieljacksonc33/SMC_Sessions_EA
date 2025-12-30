@@ -535,3 +535,15 @@ For issues, questions, or suggestions:
 **Happy Trading! 📈**
 
 *Remember: The best trading system is one that fits your risk tolerance and trading style. Always test thoroughly before live trading.*
+
+---
+
+## 📝 Credits
+
+**Developed by:** @DPC Capital By DeeJay
+
+*This Expert Advisor is created and maintained by DPC Capital. For support, questions, or collaboration opportunities, please reach out through GitHub issues or contact DPC Capital directly.*
+
+---
+
+**© 2024 DPC Capital | All Rights Reserved**
