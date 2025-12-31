@@ -542,7 +542,7 @@ The following enhancements are planned for future versions:
 - [ ] **Market Structure Analysis**: Advanced structure break detection
 - [ ] **Liquidity Pool Identification**: Automatic liquidity zone detection
 - [ ] **Multi-Pair Correlation**: Trade based on currency correlation
-- [ ] **News Filter**: Avoid trading during high-impact news events
+- [x] **News Filter**: Avoid trading during high-impact news events ✅
 - [ ] **Session Strength Indicator**: Weight trades by session strength
 
 ### Risk Management
