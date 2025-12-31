@@ -26,11 +26,15 @@ BiasType HTFBias()
     if(lastClose <= 0 || prevClose <= 0) return SIDEWAYS;
     
     // Bullish: Higher close AND higher low (uptrend structure)
-    if(lastClose > prevClose && lastLow >= prevLow && lastLow >= d1PrevLow)
+    // Refined: Equal lows are acceptable only if close is higher (avoids liquidity engineering false signals)
+    bool bullishStructure = (lastLow > prevLow) || (lastLow == prevLow && lastClose > prevClose);
+    if(lastClose > prevClose && bullishStructure && lastLow >= d1PrevLow)
         return BULLISH;
 
     // Bearish: Lower close AND lower high (downtrend structure)
-    if(lastClose < prevClose && lastHigh <= prevHigh && lastHigh <= d1PrevHigh)
+    // Refined: Equal highs are acceptable only if close is lower (avoids liquidity engineering false signals)
+    bool bearishStructure = (lastHigh < prevHigh) || (lastHigh == prevHigh && lastClose < prevClose);
+    if(lastClose < prevClose && bearishStructure && lastHigh <= d1PrevHigh)
         return BEARISH;
 
     // Sideways / unclear
