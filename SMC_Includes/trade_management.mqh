@@ -65,45 +65,55 @@ void ManageTrades()
             }
         }
         
-        // 2. Break-Even Move
-        if(EnableBreakEven && profitPips >= BreakEvenPips)
+        // 2. Trailing Stop (move SL after every 20 pips profit)
+        // Move SL up/down by 20 pips for every 20 pips profit
+        if(profitPips >= 20.0)
         {
-            double beSL = 0;
-            bool shouldMove = false;
+            double pipValue = point * 10;
+            double trailingStepPips = 20.0; // Move SL every 20 pips
+            
+            // Calculate how many 20-pip steps we've moved
+            int steps = (int)(profitPips / trailingStepPips);
+            double newSL = 0;
+            bool shouldUpdate = false;
             
             if(OrderType() == OP_BUY)
             {
-                // For buy orders, move SL to break-even or better
-                beSL = openPrice + (5 * point * 10); // Slightly above entry (5 pips)
-                if(currentSL < beSL || currentSL == 0)
+                // New SL = Entry + (steps * 20 pips)
+                newSL = openPrice + (steps * trailingStepPips * pipValue);
+                
+                // Only update if new SL is better (higher) than current SL and below current price
+                if(newSL > currentSL && newSL < currentPrice)
                 {
-                    shouldMove = true;
+                    shouldUpdate = true;
                 }
             }
             else if(OrderType() == OP_SELL)
             {
-                // For sell orders, move SL to break-even or better
-                beSL = openPrice - (5 * point * 10); // Slightly below entry (5 pips)
-                if(currentSL > beSL || currentSL == 0)
+                // New SL = Entry - (steps * 20 pips)
+                newSL = openPrice - (steps * trailingStepPips * pipValue);
+                
+                // Only update if new SL is better (lower) than current SL and above current price
+                if(newSL < currentSL && newSL > currentPrice)
                 {
-                    shouldMove = true;
+                    shouldUpdate = true;
                 }
             }
             
-            if(shouldMove)
+            if(shouldUpdate)
             {
-                beSL = NormalizeDouble(beSL, digits);
-                if(OrderModify(OrderTicket(), openPrice, beSL, currentTP, 0))
+                newSL = NormalizeDouble(newSL, digits);
+                if(OrderModify(OrderTicket(), OrderOpenPrice(), newSL, currentTP, 0, clrBlue))
                 {
-                    LogTrade("Break-even moved: Ticket " + IntegerToString(OrderTicket()) + 
-                            " at " + DoubleToString(profitPips, 1) + " pips");
-                    AlertBreakEven(OrderTicket(), profitPips);
+                    LogTrade("Trailing stop updated: Ticket " + IntegerToString(OrderTicket()) + 
+                            " to " + DoubleToString(newSL, 5) + " (moved " + 
+                            DoubleToString(steps * trailingStepPips, 1) + " pips from entry)");
                 }
             }
         }
         
-        // 3. Trailing Stop (only if break-even already moved or profit is good)
-        if(EnableTrailingStop && profitPips > BreakEvenPips)
+        // 3. Old trailing stop logic (disabled - using new 20-pip step logic above)
+        if(false && EnableTrailingStop && profitPips > BreakEvenPips)
         {
             double trailSL = 0;
             bool shouldTrail = false;

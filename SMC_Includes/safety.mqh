@@ -47,7 +47,13 @@ bool CanTradeSafely()
     int maxTrades = (g_MaxTradesPerDay > 0) ? g_MaxTradesPerDay : 3;
     if(tradeCount >= maxTrades)
     {
-        LogTrade("Max trades per day reached: " + IntegerToString(tradeCount));
+        // Only log once per hour to avoid spam
+        static datetime lastMaxTradesLog = 0;
+        if(TimeCurrent() - lastMaxTradesLog > 3600) // Log once per hour
+        {
+            LogTrade("Max trades per day reached: " + IntegerToString(tradeCount) + "/" + IntegerToString(maxTrades));
+            lastMaxTradesLog = TimeCurrent();
+        }
         return false;
     }
     
@@ -71,7 +77,13 @@ bool CanTradeSafely()
         double drawdown = ((peakBal - equity) / peakBal) * 100.0;
         if(drawdown >= maxDrawdownPct)
         {
-            LogTrade("Max drawdown reached: " + DoubleToString(drawdown, 2) + "%");
+            // Only log once per hour to avoid spam
+            static datetime lastDrawdownLog = 0;
+            if(TimeCurrent() - lastDrawdownLog > 3600) // Log once per hour
+            {
+                LogTrade("Max drawdown reached: " + DoubleToString(drawdown, 2) + "%");
+                lastDrawdownLog = TimeCurrent();
+            }
             return false;
         }
     }

@@ -77,27 +77,102 @@ bool PlaceTrade(BiasType bias)
         return false;
     }
     
-    // Calculate stop loss and take profit
+    // Calculate stop loss and take profit using Fibonacci 0.618 level
     double stopLoss = 0;
     double takeProfit = 0;
-    int stopBufferPips = (StopBufferPips > 0) ? StopBufferPips : STOP_BUFFER_PIPS;
-    double stopBuffer = stopBufferPips * _Point * 10; // Convert pips to price
+    double point = Point;
+    double pipValue = point * 10; // 1 pip in price terms
+    
+    // Calculate Asian range
+    double asiaRange = AsiaHigh - AsiaLow;
+    if(asiaRange <= 0) return false;
+    
+    // Maximum stop loss distance from entry (20 pips)
+    double maxSLDistance = 20.0 * pipValue;
+    
+    // Fibonacci 0.618 level
+    double fib618Level = 0;
+    
+    // Variables used in both BULLISH and BEARISH sections
+    double slAtFib = 0;
+    double slDistanceFromEntry = 0;
+    double riskDistance = 0;
     
     if(bias == BULLISH)
     {
-        stopLoss = AsiaLow - stopBuffer;
-        takeProfit = AsiaHigh + (AsiaHigh - AsiaLow); // HTF target (1:1 extension)
+        // For BUY: 0.618 level = AsiaLow + 0.618 * (AsiaHigh - AsiaLow)
+        fib618Level = AsiaLow + (0.618 * asiaRange);
+        
+        // Stop loss: 5 pips below 0.618 level
+        slAtFib = fib618Level - (5.0 * pipValue);
+        
+        // Calculate distance from entry to SL at Fibonacci
+        slDistanceFromEntry = FVGEntry - slAtFib;
+        
+        // Cap SL distance at maximum 20 pips from entry
+        if(slDistanceFromEntry > maxSLDistance)
+        {
+            // If Fibonacci SL is more than 20 pips, use entry - 20 pips
+            stopLoss = FVGEntry - maxSLDistance;
+        }
+        else
+        {
+            // Use Fibonacci level - 5 pips
+            stopLoss = slAtFib;
+        }
+        
+        // Calculate actual risk distance (entry to stop loss)
+        riskDistance = FVGEntry - stopLoss;
+        
+        // First target (TP1): 2x the SL distance (1:2 risk/reward)
+        takeProfit = FVGEntry + (riskDistance * 2.0);
         
         // Validate prices
-        if(stopLoss >= FVGEntry || takeProfit <= FVGEntry) return false;
+        if(stopLoss >= FVGEntry || takeProfit <= FVGEntry) 
+        {
+            LogTrade("Invalid SL/TP for BUY: Entry=" + DoubleToString(FVGEntry, 5) + 
+                    " SL=" + DoubleToString(stopLoss, 5) + " TP=" + DoubleToString(takeProfit, 5) +
+                    " Fib618=" + DoubleToString(fib618Level, 5));
+            return false;
+        }
     }
     else if(bias == BEARISH)
     {
-        stopLoss = AsiaHigh + stopBuffer;
-        takeProfit = AsiaLow - (AsiaHigh - AsiaLow); // HTF target (1:1 extension)
+        // For SELL: 0.618 level = AsiaHigh - 0.618 * (AsiaHigh - AsiaLow)
+        fib618Level = AsiaHigh - (0.618 * asiaRange);
+        
+        // Stop loss: 5 pips above 0.618 level
+        slAtFib = fib618Level + (5.0 * pipValue);
+        
+        // Calculate distance from entry to SL at Fibonacci
+        slDistanceFromEntry = slAtFib - FVGEntry;
+        
+        // Cap SL distance at maximum 20 pips from entry
+        if(slDistanceFromEntry > maxSLDistance)
+        {
+            // If Fibonacci SL is more than 20 pips, use entry + 20 pips
+            stopLoss = FVGEntry + maxSLDistance;
+        }
+        else
+        {
+            // Use Fibonacci level + 5 pips
+            stopLoss = slAtFib;
+        }
+        
+        // Calculate actual risk distance (stop loss to entry)
+        riskDistance = stopLoss - FVGEntry;
+        
+        // First target (TP1): 2x the SL distance (1:2 risk/reward)
+        takeProfit = FVGEntry - (riskDistance * 2.0);
         
         // Validate prices
-        if(stopLoss <= FVGEntry || takeProfit >= FVGEntry) return false;
+        if(stopLoss <= FVGEntry || takeProfit >= FVGEntry) 
+        {
+            LogTrade("Invalid SL/TP for SELL: Entry=" + DoubleToString(FVGEntry, 5) + 
+                    " SL=" + DoubleToString(stopLoss, 5) + " TP=" + DoubleToString(takeProfit, 5) +
+                    " Fib618=" + DoubleToString(fib618Level, 5));
+            return false;
+        }
     }
     else
     {
@@ -113,7 +188,7 @@ bool PlaceTrade(BiasType bias)
     // Normalize prices (MQL4)
     double ask = Ask;
     double bid = Bid;
-    double point = Point;
+    // point already declared above
     int digits = Digits;
     
     // Round prices to proper digits
