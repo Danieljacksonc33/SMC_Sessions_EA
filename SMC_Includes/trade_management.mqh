@@ -5,12 +5,12 @@
 
 // External variables (declared in main file, accessible here)
 // MagicNumber is from main file
+// g_EnableTrailingStop is from main file (global variable)
 // Additional settings for trade management
 bool EnableBreakEven = true;
 int BreakEvenPips = 20;  // Move to break-even after X pips profit
-bool EnableTrailingStop = true;
-int TrailingStopPips = 15;  // Trailing stop distance in pips
-int TrailingStepPips = 5;   // Trailing step in pips
+int TrailingStopPips = 15;  // Trailing stop distance in pips (not used currently - using 20-pip step logic)
+int TrailingStepPips = 5;   // Trailing step in pips (not used currently - using 20-pip step logic)
 bool EnablePartialClose = false;
 int PartialClosePercent = 50;  // Close X% at first TP
 int PartialClosePips = 30;     // Close partial at X pips profit
@@ -67,7 +67,8 @@ void ManageTrades()
         
         // 2. Trailing Stop (move SL after every 20 pips profit)
         // Move SL up/down by 20 pips for every 20 pips profit
-        if(profitPips >= 20.0)
+        // Only if trailing stop is enabled (can disable in high volatility sessions)
+        if(g_EnableTrailingStop && profitPips >= 20.0)
         {
             double pipValue = point * 10;
             double trailingStepPips = 20.0; // Move SL every 20 pips

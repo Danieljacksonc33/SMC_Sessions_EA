@@ -72,9 +72,10 @@ string PeriodToString(int period)
 
 // Optimization parameters helper (for Strategy Tester optimization)
 // These can be used in Strategy Tester optimization
+// Note: These are placeholder parameters for optimization - use the main parameters instead
 extern int Opt_SessionStart = 2;              // Optimization: Session start
 extern int Opt_SessionEnd = 5;                 // Optimization: Session end
 extern double Opt_RiskPercent = 0.5;           // Optimization: Risk percent
 extern int Opt_ADX_Level = 25;                 // Optimization: ADX level
-extern bool Opt_TradeOnlyTrending = true;      // Optimization: Trade only trending
+// Note: Opt_TradeOnlyTrending removed - use TradeOnlyTrending parameter in main file instead
 

@@ -77,107 +77,268 @@ bool PlaceTrade(BiasType bias)
         return false;
     }
     
-    // Calculate stop loss and take profit using Fibonacci 0.618 level
+    // Calculate stop loss and take profit
     double stopLoss = 0;
     double takeProfit = 0;
     double point = Point;
     double pipValue = point * 10; // 1 pip in price terms
     
-    // Calculate Asian range
-    double asiaRange = AsiaHigh - AsiaLow;
-    if(asiaRange <= 0) return false;
-    
-    // Maximum stop loss distance from entry (20 pips)
-    double maxSLDistance = 20.0 * pipValue;
-    
-    // Fibonacci 0.618 level
-    double fib618Level = 0;
-    
-    // Variables used in both BULLISH and BEARISH sections
-    double slAtFib = 0;
-    double slDistanceFromEntry = 0;
+    // Variable for risk distance (used in both manual and automatic modes)
     double riskDistance = 0;
     
-    if(bias == BULLISH)
+    // Check if manual stop loss or take profit override is enabled
+    if(g_UseManualStopLoss && g_ManualStopLossPips > 0)
     {
-        // For BUY: 0.618 level = AsiaLow + 0.618 * (AsiaHigh - AsiaLow)
-        fib618Level = AsiaLow + (0.618 * asiaRange);
+        // Use manual stop loss (simple distance from entry)
+        double manualSLDistance = g_ManualStopLossPips * pipValue;
         
-        // Stop loss: 5 pips below 0.618 level
-        slAtFib = fib618Level - (5.0 * pipValue);
-        
-        // Calculate distance from entry to SL at Fibonacci
-        slDistanceFromEntry = FVGEntry - slAtFib;
-        
-        // Cap SL distance at maximum 20 pips from entry
-        if(slDistanceFromEntry > maxSLDistance)
+        if(bias == BULLISH)
         {
-            // If Fibonacci SL is more than 20 pips, use entry - 20 pips
-            stopLoss = FVGEntry - maxSLDistance;
+            stopLoss = FVGEntry - manualSLDistance;
+            riskDistance = manualSLDistance;
+            
+            // Use manual TP if enabled, otherwise use 1:2 R:R
+            if(g_UseManualTakeProfit && g_ManualTakeProfitPips > 0)
+            {
+                takeProfit = FVGEntry + (g_ManualTakeProfitPips * pipValue);
+            }
+            else
+            {
+                takeProfit = FVGEntry + (riskDistance * 2.0); // 1:2 R:R
+            }
+        }
+        else if(bias == BEARISH)
+        {
+            stopLoss = FVGEntry + manualSLDistance;
+            riskDistance = manualSLDistance;
+            
+            // Use manual TP if enabled, otherwise use 1:2 R:R
+            if(g_UseManualTakeProfit && g_ManualTakeProfitPips > 0)
+            {
+                takeProfit = FVGEntry - (g_ManualTakeProfitPips * pipValue);
+            }
+            else
+            {
+                takeProfit = FVGEntry - (riskDistance * 2.0); // 1:2 R:R
+            }
         }
         else
         {
-            // Use Fibonacci level - 5 pips
-            stopLoss = slAtFib;
-        }
-        
-        // Calculate actual risk distance (entry to stop loss)
-        riskDistance = FVGEntry - stopLoss;
-        
-        // First target (TP1): 2x the SL distance (1:2 risk/reward)
-        takeProfit = FVGEntry + (riskDistance * 2.0);
-        
-        // Validate prices
-        if(stopLoss >= FVGEntry || takeProfit <= FVGEntry) 
-        {
-            LogTrade("Invalid SL/TP for BUY: Entry=" + DoubleToString(FVGEntry, 5) + 
-                    " SL=" + DoubleToString(stopLoss, 5) + " TP=" + DoubleToString(takeProfit, 5) +
-                    " Fib618=" + DoubleToString(fib618Level, 5));
             return false;
         }
+        
+        // Validate manual SL/TP
+        if((bias == BULLISH && (stopLoss >= FVGEntry || takeProfit <= FVGEntry)) ||
+           (bias == BEARISH && (stopLoss <= FVGEntry || takeProfit >= FVGEntry)))
+        {
+            LogTrade("Invalid manual SL/TP: Entry=" + DoubleToString(FVGEntry, 5) + 
+                    " SL=" + DoubleToString(stopLoss, 5) + " TP=" + DoubleToString(takeProfit, 5));
+            return false;
+        }
+        
+        // Skip Fibonacci calculation, proceed to lot size calculation
     }
-    else if(bias == BEARISH)
+    else if(g_UseManualTakeProfit && g_ManualTakeProfitPips > 0)
     {
-        // For SELL: 0.618 level = AsiaHigh - 0.618 * (AsiaHigh - AsiaLow)
-        fib618Level = AsiaHigh - (0.618 * asiaRange);
+        // Manual TP only (SL still uses automatic MSS-based calculation)
+        // Note: This section should also use MSS-based SL, but keeping old Fibonacci logic as fallback
+        // Calculate Asian range for automatic SL (old logic - should be updated to MSS)
+        double asiaRange = AsiaHigh - AsiaLow;
+        if(asiaRange <= 0) return false;
         
-        // Stop loss: 5 pips above 0.618 level
-        slAtFib = fib618Level + (5.0 * pipValue);
+        // Maximum stop loss distance from entry (20 pips) - declare once at function scope
+        // (maxSLDistance will be redeclared in else block, but they're in separate blocks)
+        double maxSLDistanceTP = 20.0 * pipValue;
         
-        // Calculate distance from entry to SL at Fibonacci
-        slDistanceFromEntry = slAtFib - FVGEntry;
+        // Fibonacci 0.618 level
+        double fib618Level = 0;
+        double slAtFib = 0;
+        double slDistanceFromEntry = 0;
         
-        // Cap SL distance at maximum 20 pips from entry
-        if(slDistanceFromEntry > maxSLDistance)
+        if(bias == BULLISH)
         {
-            // If Fibonacci SL is more than 20 pips, use entry + 20 pips
-            stopLoss = FVGEntry + maxSLDistance;
+            // For BUY: 0.618 level = AsiaLow + 0.618 * (AsiaHigh - AsiaLow)
+            fib618Level = AsiaLow + (0.618 * asiaRange);
+            slAtFib = fib618Level - (5.0 * pipValue);
+            slDistanceFromEntry = FVGEntry - slAtFib;
+            
+            if(slDistanceFromEntry > maxSLDistanceTP)
+            {
+                stopLoss = FVGEntry - maxSLDistanceTP;
+            }
+            else
+            {
+                stopLoss = slAtFib;
+            }
+            
+            riskDistance = FVGEntry - stopLoss;
+            // Use manual TP
+            takeProfit = FVGEntry + (g_ManualTakeProfitPips * pipValue);
+        }
+        else if(bias == BEARISH)
+        {
+            // For SELL: 0.618 level = AsiaHigh - 0.618 * (AsiaHigh - AsiaLow)
+            fib618Level = AsiaHigh - (0.618 * asiaRange);
+            slAtFib = fib618Level + (5.0 * pipValue);
+            slDistanceFromEntry = slAtFib - FVGEntry;
+            
+            if(slDistanceFromEntry > maxSLDistanceTP)
+            {
+                stopLoss = FVGEntry + maxSLDistanceTP;
+            }
+            else
+            {
+                stopLoss = slAtFib;
+            }
+            
+            riskDistance = stopLoss - FVGEntry;
+            // Use manual TP
+            takeProfit = FVGEntry - (g_ManualTakeProfitPips * pipValue);
         }
         else
         {
-            // Use Fibonacci level + 5 pips
-            stopLoss = slAtFib;
-        }
-        
-        // Calculate actual risk distance (stop loss to entry)
-        riskDistance = stopLoss - FVGEntry;
-        
-        // First target (TP1): 2x the SL distance (1:2 risk/reward)
-        takeProfit = FVGEntry - (riskDistance * 2.0);
-        
-        // Validate prices
-        if(stopLoss <= FVGEntry || takeProfit >= FVGEntry) 
-        {
-            LogTrade("Invalid SL/TP for SELL: Entry=" + DoubleToString(FVGEntry, 5) + 
-                    " SL=" + DoubleToString(stopLoss, 5) + " TP=" + DoubleToString(takeProfit, 5) +
-                    " Fib618=" + DoubleToString(fib618Level, 5));
             return false;
         }
+        
+        // Validate automatic SL with manual TP
+        if((bias == BULLISH && (stopLoss >= FVGEntry || takeProfit <= FVGEntry)) ||
+           (bias == BEARISH && (stopLoss <= FVGEntry || takeProfit >= FVGEntry)))
+        {
+            LogTrade("Invalid SL/TP (Auto SL + Manual TP): Entry=" + DoubleToString(FVGEntry, 5) + 
+                    " SL=" + DoubleToString(stopLoss, 5) + " TP=" + DoubleToString(takeProfit, 5));
+            return false;
+        }
+        
+        // Proceed to lot size calculation
     }
     else
     {
-        return false;
-    }
+        // Automatic calculation using 50% displacement + 5 pips after MSS
+        // Displacement = FVG range (FVGBottom to FVGTop)
+        // Entry is already at 50% of displacement (FVGEntry = midpoint of FVG)
+        // MSS = Market Structure Shift (Lower High for bearish, Higher Low for bullish)
+        
+        // Validate FVG range
+        double displacementRange = FVGTop - FVGBottom;
+        if(displacementRange <= 0) return false;
+        
+        // Find Market Structure Shift (MSS)
+        double mssLevel = FindMSS(bias, 20);
+        
+        // Maximum stop loss distance from entry (20 pips)
+        double maxSLDistance = 20.0 * pipValue;
+        
+        if(bias == BULLISH)
+        {
+            // For BUY: Find Higher Low (HL) after displacement
+            if(mssLevel > 0 && mssLevel < FVGEntry)
+            {
+                // Stop loss = HL - 5 pips
+                stopLoss = mssLevel - (5.0 * pipValue);
+                
+                // Calculate distance from entry to SL
+                riskDistance = FVGEntry - stopLoss;
+                
+                // Ensure total is 20 pips (cap if more, adjust if less)
+                if(riskDistance > maxSLDistance)
+                {
+                    // If more than 20 pips, cap at 20 pips
+                    stopLoss = FVGEntry - maxSLDistance;
+                    riskDistance = maxSLDistance;
+                }
+                else if(riskDistance < (15.0 * pipValue))
+                {
+                    // If less than 15 pips, adjust to maintain minimum distance
+                    // Keep MSS-based SL but log warning
+                    LogTrade("Warning: MSS-based SL is less than 15 pips: " + DoubleToString(riskDistance / pipValue, 1) + " pips");
+                }
+            }
+            else
+            {
+                // Fallback: If MSS not found or invalid, use 20 pips below entry
+                stopLoss = FVGEntry - maxSLDistance;
+                riskDistance = maxSLDistance;
+                LogTrade("MSS not found for BUY, using 20 pips SL");
+            }
+            
+            // Use manual TP if enabled, otherwise use 1:2 R:R
+            if(g_UseManualTakeProfit && g_ManualTakeProfitPips > 0)
+            {
+                takeProfit = FVGEntry + (g_ManualTakeProfitPips * pipValue);
+            }
+            else
+            {
+                // First target (TP1): 2x the SL distance (1:2 risk/reward)
+                takeProfit = FVGEntry + (riskDistance * 2.0);
+            }
+            
+            // Validate prices
+            if(stopLoss >= FVGEntry || takeProfit <= FVGEntry) 
+            {
+                LogTrade("Invalid SL/TP for BUY: Entry=" + DoubleToString(FVGEntry, 5) + 
+                        " SL=" + DoubleToString(stopLoss, 5) + " TP=" + DoubleToString(takeProfit, 5) +
+                        " MSS=" + DoubleToString(mssLevel, 5));
+                return false;
+            }
+        }
+        else if(bias == BEARISH)
+        {
+            // For SELL: Find Lower High (LH) after displacement
+            if(mssLevel > 0 && mssLevel > FVGEntry)
+            {
+                // Stop loss = LH + 5 pips
+                stopLoss = mssLevel + (5.0 * pipValue);
+                
+                // Calculate distance from entry to SL
+                riskDistance = stopLoss - FVGEntry;
+                
+                // Ensure total is 20 pips (cap if more, adjust if less)
+                if(riskDistance > maxSLDistance)
+                {
+                    // If more than 20 pips, cap at 20 pips
+                    stopLoss = FVGEntry + maxSLDistance;
+                    riskDistance = maxSLDistance;
+                }
+                else if(riskDistance < (15.0 * pipValue))
+                {
+                    // If less than 15 pips, adjust to maintain minimum distance
+                    // Keep MSS-based SL but log warning
+                    LogTrade("Warning: MSS-based SL is less than 15 pips: " + DoubleToString(riskDistance / pipValue, 1) + " pips");
+                }
+            }
+            else
+            {
+                // Fallback: If MSS not found or invalid, use 20 pips above entry
+                stopLoss = FVGEntry + maxSLDistance;
+                riskDistance = maxSLDistance;
+                LogTrade("MSS not found for SELL, using 20 pips SL");
+            }
+            
+            // Use manual TP if enabled, otherwise use 1:2 R:R
+            if(g_UseManualTakeProfit && g_ManualTakeProfitPips > 0)
+            {
+                takeProfit = FVGEntry - (g_ManualTakeProfitPips * pipValue);
+            }
+            else
+            {
+                // First target (TP1): 2x the SL distance (1:2 risk/reward)
+                takeProfit = FVGEntry - (riskDistance * 2.0);
+            }
+            
+            // Validate prices
+            if(stopLoss <= FVGEntry || takeProfit >= FVGEntry) 
+            {
+                LogTrade("Invalid SL/TP for SELL: Entry=" + DoubleToString(FVGEntry, 5) + 
+                        " SL=" + DoubleToString(stopLoss, 5) + " TP=" + DoubleToString(takeProfit, 5) +
+                        " MSS=" + DoubleToString(mssLevel, 5));
+                return false;
+            }
+        }
+        else
+        {
+            return false;
+        }
+    } // End of automatic SL calculation
     
     // Calculate lot size based on risk (use extern variable)
     double riskPct = (RiskPercent > 0) ? RiskPercent : 0.5;
