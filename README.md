@@ -694,10 +694,10 @@ For issues, questions, or suggestions:
 
 ## 📝 Credits
 
-**Developed by:** @DPC Capital By DeeJay
+**Developed by:** BluePips University By Deejay
 
-*This Expert Advisor is created and maintained by DPC Capital. For support, questions, or collaboration opportunities, please reach out through GitHub issues or contact DPC Capital directly.*
+*This Expert Advisor is created and maintained by BluePips University. For support, questions, or collaboration opportunities, please reach out through GitHub issues or contact BluePips University directly.*
 
 ---
 
-**© 2024 DPC Capital | All Rights Reserved**
+**© 2024 BluePips University | All Rights Reserved**
