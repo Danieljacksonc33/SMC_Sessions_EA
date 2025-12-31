@@ -196,6 +196,108 @@ The SMC Sessions EA is an automated trading system that combines Smart Money Con
 | `SRLookback` | 50 | Bars to look back for S/R |
 | `SRBufferPips` | 20 | Buffer in pips to avoid S/R |
 
+## 🧪 Settings Guide: Testing to Industrial
+
+### Recommended Settings by Phase
+
+When testing the EA, start with lenient settings and gradually tighten them as you validate functionality.
+
+#### Phase 1: Basic Functionality Testing (Start Here)
+
+**Purpose:** Test core strategy without filters blocking trades.
+
+```
+EnableMarketFilter = false          // Disable all filters
+EnableVolumeFilter = false
+EnableMomentumFilter = false
+EnableSRFilter = false
+```
+
+**What to expect:**
+- More trades (tests core strategy)
+- May include trades in choppy markets
+- Faster validation of sweep → CHOCH → FVG logic
+
+---
+
+#### Phase 2: Market Filter Only
+
+**Purpose:** Test with market condition checks while keeping entry filters disabled.
+
+```
+EnableMarketFilter = true
+TradeOnlyTrending = false           // Allow all market conditions
+ADX_Period = 14
+ADX_Level = 20                      // Lower from 25 (less strict)
+ATR_Period = 14
+ATR_MinPips = 5.0                   // Lower from 10.0 (more lenient)
+ATR_MaxPips = 200.0                 // Higher from 100.0 (more lenient)
+
+EnableVolumeFilter = false
+EnableMomentumFilter = false
+EnableSRFilter = false
+```
+
+**What to expect:**
+- Filters out extremely low/high volatility
+- Still allows choppy markets
+- Tests ADX and ATR filters
+
+---
+
+#### Phase 3: All Filters Enabled (Production-Like)
+
+**Purpose:** Test with all filters enabled for realistic trading conditions.
+
+```
+EnableMarketFilter = true
+TradeOnlyTrending = true            // Back to strict
+ADX_Period = 14
+ADX_Level = 25                      // Default (strict)
+ATR_Period = 14
+ATR_MinPips = 10.0                  // Default
+ATR_MaxPips = 100.0                 // Default
+
+EnableVolumeFilter = true
+EnableMomentumFilter = true
+EnableSRFilter = true
+```
+
+**What to expect:**
+- Fewer, higher-quality trades
+- Only trades in trending markets
+- All confirmation filters active
+
+---
+
+### Quick Reference: Testing Values
+
+| Filter | Default | Testing Value | Industrial Value |
+|--------|---------|---------------|------------------|
+| **TradeOnlyTrending** | `true` | `false` | `true` |
+| **ADX_Level** | `25` | `20` | `25` |
+| **ATR_MinPips** | `10.0` | `5.0` | `10.0` |
+| **ATR_MaxPips** | `100.0` | `200.0` | `100.0` |
+| **EnableVolumeFilter** | `true` | `false` | `true` |
+| **EnableMomentumFilter** | `true` | `false` | `true` |
+| **EnableSRFilter** | `true` | `false` | `true` |
+
+### Troubleshooting Settings
+
+**If you see "ATR too low" messages:**
+- Lower `ATR_MinPips` to `3.0` or `5.0` for testing
+
+**If you see "Market filter: CHOPPY":**
+- Set `TradeOnlyTrending = false` for testing
+
+**If no trades for days:**
+- Disable all filters temporarily to verify core strategy works
+
+**If too many trades:**
+- Gradually enable filters one by one
+
+---
+
 #### Trade Management
 | Parameter | Default | Description |
 |-----------|---------|-------------|
