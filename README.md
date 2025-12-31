@@ -22,7 +22,7 @@ A sophisticated MetaTrader 4 Expert Advisor implementing Smart Money Concepts (S
 
 The SMC Sessions EA is an automated trading system that combines Smart Money Concepts with session-based analysis. It identifies high-probability trading opportunities by:
 
-1. **Session Analysis**: Calculates Asian session range (7 PM - 12 AM CST)
+1. **Session Analysis**: Calculates Asian session range (6 PM - 12 AM CST)
 2. **Higher Timeframe Bias**: Determines market direction using H4 and D1 timeframes
 3. **Liquidity Sweeps**: Detects when price breaks Asian session highs/lows
 4. **Change of Character (CHOCH)**: Identifies structural breaks in market direction
@@ -75,7 +75,7 @@ The SMC Sessions EA is an automated trading system that combines Smart Money Con
 ### Trading Flow
 
 ```
-1. Calculate Asian Session Range (7 PM - 12 AM CST)
+1. Calculate Asian Session Range (6 PM - 12 AM CST)
    └─> High and Low of Asian session
 
 2. Determine Higher Timeframe Bias (H4 + D1)
