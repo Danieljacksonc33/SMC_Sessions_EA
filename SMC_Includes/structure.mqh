@@ -275,4 +275,3 @@ double FindMSS(BiasType bias, int lookbackBars = 20)
     
     return mssLevel;
 }
-

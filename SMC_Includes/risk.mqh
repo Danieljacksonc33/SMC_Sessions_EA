@@ -60,6 +60,196 @@ bool OrderExists()
     return false;
 }
 
+// ============================================
+// Corrected Hybrid Stop Loss Calculation
+// ============================================
+// Calculates optimal stop loss using MSS (primary invalidation) and Asian range (context/safety)
+// Returns true if SL calculated successfully, false if trade should be invalidated
+// stopLoss and riskDistance are output parameters
+bool CalculateHybridStopLoss(BiasType bias, double entryPrice, double& stopLoss, double& riskDistance, string& slReason)
+{
+    double point = Point;
+    double pipValue = point * 10; // 1 pip in price terms
+    
+    // Constants
+    double minSLDistance = 15.0 * pipValue; // Minimum 15 pips
+    double maxSLDistance = 20.0 * pipValue; // Maximum 20 pips
+    double asiaBuffer = 5.0 * pipValue;     // 5 pips buffer for Asian range
+    
+    // Validate Asian range is available
+    if(AsiaHigh <= 0 || AsiaLow <= 0 || AsiaHigh <= AsiaLow)
+    {
+        // No Asian range - use fallback 20 pips
+        if(bias == BULLISH)
+        {
+            stopLoss = entryPrice - maxSLDistance;
+            riskDistance = maxSLDistance;
+        }
+        else
+        {
+            stopLoss = entryPrice + maxSLDistance;
+            riskDistance = maxSLDistance;
+        }
+        slReason = "Asian range invalid, using 20 pips fallback";
+        return true;
+    }
+    
+    // Step 1: Calculate MSS-based SL
+    double mssLevel = FindMSS(bias, 20);
+    double mssSL = 0;
+    double mssDistance = 0;
+    bool mssValid = false;
+    
+    if(mssLevel > 0)
+    {
+        if(bias == BULLISH && mssLevel < entryPrice)
+        {
+            // MSS-based SL = HL - 5 pips
+            mssSL = mssLevel - asiaBuffer;
+            mssDistance = entryPrice - mssSL;
+            
+            // Validate MSS SL: must be 15-20 pips (priority rule)
+            if(mssDistance >= minSLDistance && mssDistance <= maxSLDistance)
+            {
+                mssValid = true; // MSS is valid and in ideal range
+            }
+            else if(mssDistance > maxSLDistance)
+            {
+                // MSS too wide - will cap to 20 pips
+                mssSL = entryPrice - maxSLDistance;
+                mssDistance = maxSLDistance;
+                mssValid = true; // Use capped version
+            }
+            // If MSS too tight (<15), mark as invalid - will use Asian SL instead
+        }
+        else if(bias == BEARISH && mssLevel > entryPrice)
+        {
+            // MSS-based SL = LH + 5 pips
+            mssSL = mssLevel + asiaBuffer;
+            mssDistance = mssSL - entryPrice;
+            
+            // Validate MSS SL: must be 15-20 pips (priority rule)
+            if(mssDistance >= minSLDistance && mssDistance <= maxSLDistance)
+            {
+                mssValid = true; // MSS is valid and in ideal range
+            }
+            else if(mssDistance > maxSLDistance)
+            {
+                // MSS too wide - will cap to 20 pips
+                mssSL = entryPrice + maxSLDistance;
+                mssDistance = maxSLDistance;
+                mssValid = true; // Use capped version
+            }
+            // If MSS too tight (<15), mark as invalid - will use Asian SL instead
+        }
+    }
+    
+    // Step 2: Calculate Asian-based SL
+    double asiaSL = 0;
+    double asiaDistance = 0;
+    
+    if(bias == BULLISH)
+    {
+        // Asian SL = Asian Low - 5 pips
+        asiaSL = AsiaLow - asiaBuffer;
+        asiaDistance = entryPrice - asiaSL;
+    }
+    else // BEARISH
+    {
+        // Asian SL = Asian High + 5 pips
+        asiaSL = AsiaHigh + asiaBuffer;
+        asiaDistance = asiaSL - entryPrice;
+    }
+    
+    // Step 3: Select stop by priority (MSS is PRIMARY invalidation)
+    if(mssValid)
+    {
+        // MSS is valid and in 15-20 pips range (or capped to 20)
+        stopLoss = mssSL;
+        riskDistance = mssDistance;
+        slReason = "MSS-based SL (" + DoubleToString(riskDistance / pipValue, 1) + " pips)";
+    }
+    else if(mssLevel > 0 && mssDistance < minSLDistance)
+    {
+        // MSS too tight (<15 pips) - use Asian SL instead
+        stopLoss = asiaSL;
+        riskDistance = asiaDistance;
+        slReason = "MSS too tight (" + DoubleToString(mssDistance / pipValue, 1) + " pips), using Asian SL (" + DoubleToString(riskDistance / pipValue, 1) + " pips)";
+    }
+    else
+    {
+        // No valid MSS found - use Asian SL (or 20 pips fallback if Asian is too wide)
+        if(asiaDistance > maxSLDistance)
+        {
+            // Asian SL too wide - cap to 20 pips
+            if(bias == BULLISH)
+            {
+                stopLoss = entryPrice - maxSLDistance;
+                riskDistance = maxSLDistance;
+            }
+            else
+            {
+                stopLoss = entryPrice + maxSLDistance;
+                riskDistance = maxSLDistance;
+            }
+            slReason = "No MSS, Asian SL too wide (" + DoubleToString(asiaDistance / pipValue, 1) + " pips), using 20 pips cap";
+        }
+        else
+        {
+            // Use Asian SL
+            stopLoss = asiaSL;
+            riskDistance = asiaDistance;
+            slReason = "No MSS found, using Asian SL (" + DoubleToString(riskDistance / pipValue, 1) + " pips)";
+        }
+    }
+    
+    // Step 4: Safety check - validate SL position relative to Asian range
+    if(bias == BULLISH)
+    {
+        // For bullish: SL must be below Asian Low
+        if(stopLoss > AsiaLow)
+        {
+            // SL is above Asian Low - this is a bad setup (too tight Asian range)
+            LogTrade("SAFETY CHECK FAILED (BULLISH): SL above Asian Low - invalidating trade. SL=" + 
+                    DoubleToString(stopLoss, 5) + " AsiaLow=" + DoubleToString(AsiaLow, 5));
+            return false; // Invalidate trade
+        }
+        else if(stopLoss >= AsiaLow - asiaBuffer && stopLoss <= AsiaLow)
+        {
+            // SL is inside/very close to Asian range - log warning but allow
+            LogTrade("WARNING: SL is inside Asian range (BULLISH). SL=" + DoubleToString(stopLoss, 5) + 
+                    " AsiaLow=" + DoubleToString(AsiaLow, 5) + " - trade allowed but risky");
+        }
+    }
+    else // BEARISH
+    {
+        // For bearish: SL must be above Asian High
+        if(stopLoss < AsiaHigh)
+        {
+            // SL is below Asian High - this is a bad setup (too tight Asian range)
+            LogTrade("SAFETY CHECK FAILED (BEARISH): SL below Asian High - invalidating trade. SL=" + 
+                    DoubleToString(stopLoss, 5) + " AsiaHigh=" + DoubleToString(AsiaHigh, 5));
+            return false; // Invalidate trade
+        }
+        else if(stopLoss <= AsiaHigh + asiaBuffer && stopLoss >= AsiaHigh)
+        {
+            // SL is inside/very close to Asian range - log warning but allow
+            LogTrade("WARNING: SL is inside Asian range (BEARISH). SL=" + DoubleToString(stopLoss, 5) + 
+                    " AsiaHigh=" + DoubleToString(AsiaHigh, 5) + " - trade allowed but risky");
+        }
+    }
+    
+    // Validate final SL is on correct side of entry
+    if((bias == BULLISH && stopLoss >= entryPrice) || (bias == BEARISH && stopLoss <= entryPrice))
+    {
+        LogTrade("ERROR: Calculated SL is on wrong side of entry. Entry=" + DoubleToString(entryPrice, 5) + 
+                " SL=" + DoubleToString(stopLoss, 5) + " Bias=" + (bias == BULLISH ? "BULLISH" : "BEARISH"));
+        return false;
+    }
+    
+    return true; // SL calculated successfully
+}
+
 bool PlaceTrade(BiasType bias)
 {
     if(!FVGReady) return false;
@@ -140,71 +330,29 @@ bool PlaceTrade(BiasType bias)
     }
     else if(g_UseManualTakeProfit && g_ManualTakeProfitPips > 0)
     {
-        // Manual TP only (SL still uses automatic MSS-based calculation)
-        // Note: This section should also use MSS-based SL, but keeping old Fibonacci logic as fallback
-        // Calculate Asian range for automatic SL (old logic - should be updated to MSS)
-        double asiaRange = AsiaHigh - AsiaLow;
-        if(asiaRange <= 0) return false;
-        
-        // Maximum stop loss distance from entry (20 pips) - declare once at function scope
-        // (maxSLDistance will be redeclared in else block, but they're in separate blocks)
-        double maxSLDistanceTP = 20.0 * pipValue;
-        
-        // Fibonacci 0.618 level
-        double fib618Level = 0;
-        double slAtFib = 0;
-        double slDistanceFromEntry = 0;
-        
-        if(bias == BULLISH)
+        // Manual TP only - use hybrid SL calculation (MSS + Asian range)
+        string slReason = "";
+        if(!CalculateHybridStopLoss(bias, FVGEntry, stopLoss, riskDistance, slReason))
         {
-            // For BUY: 0.618 level = AsiaLow + 0.618 * (AsiaHigh - AsiaLow)
-            fib618Level = AsiaLow + (0.618 * asiaRange);
-            slAtFib = fib618Level - (5.0 * pipValue);
-            slDistanceFromEntry = FVGEntry - slAtFib;
-            
-            if(slDistanceFromEntry > maxSLDistanceTP)
-            {
-                stopLoss = FVGEntry - maxSLDistanceTP;
-            }
-            else
-            {
-                stopLoss = slAtFib;
-            }
-            
-            riskDistance = FVGEntry - stopLoss;
-            // Use manual TP
-            takeProfit = FVGEntry + (g_ManualTakeProfitPips * pipValue);
-        }
-        else if(bias == BEARISH)
-        {
-            // For SELL: 0.618 level = AsiaHigh - 0.618 * (AsiaHigh - AsiaLow)
-            fib618Level = AsiaHigh - (0.618 * asiaRange);
-            slAtFib = fib618Level + (5.0 * pipValue);
-            slDistanceFromEntry = slAtFib - FVGEntry;
-            
-            if(slDistanceFromEntry > maxSLDistanceTP)
-            {
-                stopLoss = FVGEntry + maxSLDistanceTP;
-            }
-            else
-            {
-                stopLoss = slAtFib;
-            }
-            
-            riskDistance = stopLoss - FVGEntry;
-            // Use manual TP
-            takeProfit = FVGEntry - (g_ManualTakeProfitPips * pipValue);
-        }
-        else
-        {
+            // Trade invalidated by safety check
+            LogTrade("Trade invalidated (Manual TP mode): " + slReason);
             return false;
         }
         
-        // Validate automatic SL with manual TP
+        // Log which SL was chosen
+        LogTrade("Stop Loss Calculation (Manual TP mode): " + slReason);
+        
+        // Use manual TP
+        if(bias == BULLISH)
+            takeProfit = FVGEntry + (g_ManualTakeProfitPips * pipValue);
+        else
+            takeProfit = FVGEntry - (g_ManualTakeProfitPips * pipValue);
+        
+        // Validate SL/TP
         if((bias == BULLISH && (stopLoss >= FVGEntry || takeProfit <= FVGEntry)) ||
            (bias == BEARISH && (stopLoss <= FVGEntry || takeProfit >= FVGEntry)))
         {
-            LogTrade("Invalid SL/TP (Auto SL + Manual TP): Entry=" + DoubleToString(FVGEntry, 5) + 
+            LogTrade("Invalid SL/TP (Hybrid SL + Manual TP): Entry=" + DoubleToString(FVGEntry, 5) + 
                     " SL=" + DoubleToString(stopLoss, 5) + " TP=" + DoubleToString(takeProfit, 5));
             return false;
         }
@@ -213,129 +361,48 @@ bool PlaceTrade(BiasType bias)
     }
     else
     {
-        // Automatic calculation using 50% displacement + 5 pips after MSS
-        // Displacement = FVG range (FVGBottom to FVGTop)
-        // Entry is already at 50% of displacement (FVGEntry = midpoint of FVG)
-        // MSS = Market Structure Shift (Lower High for bearish, Higher Low for bullish)
+        // CORRECTED HYBRID STOP LOSS: MSS (primary invalidation) + Asian range (context/safety)
+        // MSS defines invalidation, Asian range defines context (not stop placement)
         
         // Validate FVG range
         double displacementRange = FVGTop - FVGBottom;
         if(displacementRange <= 0) return false;
         
-        // Find Market Structure Shift (MSS)
-        double mssLevel = FindMSS(bias, 20);
-        
-        // Maximum stop loss distance from entry (20 pips)
-        double maxSLDistance = 20.0 * pipValue;
-        
-        if(bias == BULLISH)
+        // Calculate optimal stop loss using hybrid logic
+        string slReason = "";
+        if(!CalculateHybridStopLoss(bias, FVGEntry, stopLoss, riskDistance, slReason))
         {
-            // For BUY: Find Higher Low (HL) after displacement
-            if(mssLevel > 0 && mssLevel < FVGEntry)
-            {
-                // Stop loss = HL - 5 pips
-                stopLoss = mssLevel - (5.0 * pipValue);
-                
-                // Calculate distance from entry to SL
-                riskDistance = FVGEntry - stopLoss;
-                
-                // Ensure total is 20 pips (cap if more, adjust if less)
-                if(riskDistance > maxSLDistance)
-                {
-                    // If more than 20 pips, cap at 20 pips
-                    stopLoss = FVGEntry - maxSLDistance;
-                    riskDistance = maxSLDistance;
-                }
-                else if(riskDistance < (15.0 * pipValue))
-                {
-                    // If less than 15 pips, adjust to maintain minimum distance
-                    // Keep MSS-based SL but log warning
-                    LogTrade("Warning: MSS-based SL is less than 15 pips: " + DoubleToString(riskDistance / pipValue, 1) + " pips");
-                }
-            }
-            else
-            {
-                // Fallback: If MSS not found or invalid, use 20 pips below entry
-                stopLoss = FVGEntry - maxSLDistance;
-                riskDistance = maxSLDistance;
-                LogTrade("MSS not found for BUY, using 20 pips SL");
-            }
-            
-            // Use manual TP if enabled, otherwise use 1:2 R:R
-            if(g_UseManualTakeProfit && g_ManualTakeProfitPips > 0)
-            {
-                takeProfit = FVGEntry + (g_ManualTakeProfitPips * pipValue);
-            }
-            else
-            {
-                // First target (TP1): 2x the SL distance (1:2 risk/reward)
-                takeProfit = FVGEntry + (riskDistance * 2.0);
-            }
-            
-            // Validate prices
-            if(stopLoss >= FVGEntry || takeProfit <= FVGEntry) 
-            {
-                LogTrade("Invalid SL/TP for BUY: Entry=" + DoubleToString(FVGEntry, 5) + 
-                        " SL=" + DoubleToString(stopLoss, 5) + " TP=" + DoubleToString(takeProfit, 5) +
-                        " MSS=" + DoubleToString(mssLevel, 5));
-                return false;
-            }
+            // Trade invalidated by safety check (SL in wrong position relative to Asian range)
+            LogTrade("Trade invalidated: " + slReason);
+            return false;
         }
-        else if(bias == BEARISH)
+        
+        // Log which SL was chosen and why
+        LogTrade("Stop Loss Calculation: " + slReason);
+        
+        // Use manual TP if enabled, otherwise use 1:2 R:R
+        if(g_UseManualTakeProfit && g_ManualTakeProfitPips > 0)
         {
-            // For SELL: Find Lower High (LH) after displacement
-            if(mssLevel > 0 && mssLevel > FVGEntry)
-            {
-                // Stop loss = LH + 5 pips
-                stopLoss = mssLevel + (5.0 * pipValue);
-                
-                // Calculate distance from entry to SL
-                riskDistance = stopLoss - FVGEntry;
-                
-                // Ensure total is 20 pips (cap if more, adjust if less)
-                if(riskDistance > maxSLDistance)
-                {
-                    // If more than 20 pips, cap at 20 pips
-                    stopLoss = FVGEntry + maxSLDistance;
-                    riskDistance = maxSLDistance;
-                }
-                else if(riskDistance < (15.0 * pipValue))
-                {
-                    // If less than 15 pips, adjust to maintain minimum distance
-                    // Keep MSS-based SL but log warning
-                    LogTrade("Warning: MSS-based SL is less than 15 pips: " + DoubleToString(riskDistance / pipValue, 1) + " pips");
-                }
-            }
+            if(bias == BULLISH)
+                takeProfit = FVGEntry + (g_ManualTakeProfitPips * pipValue);
             else
-            {
-                // Fallback: If MSS not found or invalid, use 20 pips above entry
-                stopLoss = FVGEntry + maxSLDistance;
-                riskDistance = maxSLDistance;
-                LogTrade("MSS not found for SELL, using 20 pips SL");
-            }
-            
-            // Use manual TP if enabled, otherwise use 1:2 R:R
-            if(g_UseManualTakeProfit && g_ManualTakeProfitPips > 0)
-            {
                 takeProfit = FVGEntry - (g_ManualTakeProfitPips * pipValue);
-            }
-            else
-            {
-                // First target (TP1): 2x the SL distance (1:2 risk/reward)
-                takeProfit = FVGEntry - (riskDistance * 2.0);
-            }
-            
-            // Validate prices
-            if(stopLoss <= FVGEntry || takeProfit >= FVGEntry) 
-            {
-                LogTrade("Invalid SL/TP for SELL: Entry=" + DoubleToString(FVGEntry, 5) + 
-                        " SL=" + DoubleToString(stopLoss, 5) + " TP=" + DoubleToString(takeProfit, 5) +
-                        " MSS=" + DoubleToString(mssLevel, 5));
-                return false;
-            }
         }
         else
         {
+            // First target (TP1): 2x the SL distance (1:2 risk/reward)
+            if(bias == BULLISH)
+                takeProfit = FVGEntry + (riskDistance * 2.0);
+            else
+                takeProfit = FVGEntry - (riskDistance * 2.0);
+        }
+        
+        // Final validation of prices
+        if((bias == BULLISH && (stopLoss >= FVGEntry || takeProfit <= FVGEntry)) ||
+           (bias == BEARISH && (stopLoss <= FVGEntry || takeProfit >= FVGEntry)))
+        {
+            LogTrade("Invalid SL/TP after calculation: Entry=" + DoubleToString(FVGEntry, 5) + 
+                    " SL=" + DoubleToString(stopLoss, 5) + " TP=" + DoubleToString(takeProfit, 5));
             return false;
         }
     } // End of automatic SL calculation

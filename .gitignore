@@ -35,3 +35,9 @@ desktop.ini
 # Documentation build
 docs/_build/
 
+# Private/Sensitive Information (DO NOT COMMIT)
+PRIVATE/
+*.private
+*.encrypted
+PRIVATE_SETUP.md
+
