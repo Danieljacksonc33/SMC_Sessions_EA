@@ -177,6 +177,18 @@ void ExportDashboardData()
     json += "    \"openProfitPips\": " + DoubleToString(openProfitPips, 1) + "\n";
     json += "  },\n";
     
+    // Multi-pair limit status
+    int currentPairs = CountTradingPairs(MagicNumber);
+    string pairsList = GetTradingPairsList(MagicNumber);
+    bool pairLimitReached = (g_MaxPairsTrading > 0 && currentPairs >= g_MaxPairsTrading);
+    json += "  \"multiPairLimit\": {\n";
+    json += "    \"enabled\": " + (g_MaxPairsTrading > 0 ? "true" : "false") + ",\n";
+    json += "    \"maxPairs\": " + IntegerToString(g_MaxPairsTrading) + ",\n";
+    json += "    \"currentPairs\": " + IntegerToString(currentPairs) + ",\n";
+    json += "    \"limitReached\": " + (pairLimitReached ? "true" : "false") + ",\n";
+    json += "    \"tradingPairs\": \"" + pairsList + "\"\n";
+    json += "  },\n";
+    
     // Statistics (using available functions only)
     json += "  \"statistics\": {\n";
     json += "    \"dailyWinRate\": " + DoubleToString(GetDailyWinRate(), 1) + ",\n";
