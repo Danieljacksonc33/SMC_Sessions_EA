@@ -69,6 +69,7 @@ The SMC Sessions EA is an automated trading system that combines Smart Money Con
 - ✅ **Modular Code**: Clean, organized codebase with separate modules
 - ✅ **Backtesting Support**: Enhanced Strategy Tester compatibility
 - ✅ **Visual Indicator**: Blinking star indicator shows EA is running (every 5 minutes)
+- ✅ **Web Dashboard**: Real-time web-based performance dashboard (See [Dashboard Repository](../SMC_Dashboard))
 
 ## 🧠 Strategy Logic
 
@@ -447,6 +448,31 @@ The EA can run on multiple pairs simultaneously:
 3. Or use different Magic Numbers to track separately
 4. Each pair has independent trade limits
 
+## 📊 Web Dashboard
+
+The EA includes a beautiful, real-time web dashboard for monitoring performance and status. The dashboard is available in a separate repository:
+
+**📦 [SMC Dashboard Repository](../SMC_Dashboard)**
+
+### Dashboard Features
+
+- **Real-time Monitoring**: Auto-refreshes every 5 seconds
+- **Account Information**: Balance, equity, current symbol, spread
+- **Market Status**: Bias, CHOCH, FVG status
+- **Trading Status**: Session status, open trades, P/L
+- **Performance Metrics**: Win rate, profit factor, statistics
+- **Auto-Launch**: Automatically launches when EA starts
+- **Modern UI**: Beautiful dark theme with smooth animations
+
+### Quick Setup
+
+1. Navigate to the [Dashboard Repository](../SMC_Dashboard)
+2. Follow the setup instructions in the Dashboard README
+3. Enable `EnableDashboardExport = true` in EA inputs
+4. Dashboard will launch automatically!
+
+For detailed dashboard documentation, installation, and troubleshooting, see the [Dashboard Repository README](../SMC_Dashboard/README.md).
+
 ## 📁 File Structure
 
 ```
@@ -469,11 +495,14 @@ SMC_Sessions_EA/
 │   ├── analytics.mqh            # Enhanced analytics
 │   ├── backtesting.mqh         # Backtesting enhancements
 │   ├── alerts.mqh               # Alert system
+│   ├── dashboard_export.mqh     # Dashboard data export
 │   └── visual_indicator.mqh     # Visual blinking star indicator
 ├── README.md                    # This file
 ├── USAGE_GUIDE.md              # Detailed usage guide
 └── INSTALLATION.md             # Installation instructions
 ```
+
+**Note:** Dashboard files (HTML, scripts, automation) are in the separate [Dashboard Repository](../SMC_Dashboard).
 
 ## 🔧 Requirements
 
@@ -560,7 +589,7 @@ The following enhancements are planned for future versions:
 - [ ] **Time-Based Exits**: Exit trades at specific times
 
 ### Analytics & Reporting
-- [ ] **Web Dashboard**: Real-time web-based performance dashboard
+- [x] **Web Dashboard**: Real-time web-based performance dashboard ✅ (See [Dashboard Repository](../SMC_Dashboard))
 - [ ] **Trade Journal Export**: Export trades to CSV/Excel
 - [ ] **Performance Attribution**: Analyze which filters contribute most
 - [ ] **Optimization Reports**: Detailed optimization analysis
@@ -698,6 +727,4 @@ For issues, questions, or suggestions:
 
 *This Expert Advisor is created and maintained by BluePips University. For support, questions, or collaboration opportunities, please reach out through GitHub issues or contact BluePips University directly.*
 
----
-
-**© 2024 BluePips University | All Rights Reserved**
+---**© 2024 BluePips University | All Rights Reserved**

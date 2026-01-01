@@ -70,12 +70,7 @@ string PeriodToString(int period)
     }
 }
 
-// Optimization parameters helper (for Strategy Tester optimization)
-// These can be used in Strategy Tester optimization
-// Note: These are placeholder parameters for optimization - use the main parameters instead
-extern int Opt_SessionStart = 2;              // Optimization: Session start
-extern int Opt_SessionEnd = 5;                 // Optimization: Session end
-extern double Opt_RiskPercent = 0.5;           // Optimization: Risk percent
-extern int Opt_ADX_Level = 25;                 // Optimization: ADX level
-// Note: Opt_TradeOnlyTrending removed - use TradeOnlyTrending parameter in main file instead
+// Optimization note: Use the main EA parameters for Strategy Tester optimization
+// The main parameters (SessionStartHour, SessionEndHour, RiskPercent, ADX_Level, etc.)
+// can all be optimized directly in Strategy Tester - no separate Opt_ parameters needed
 

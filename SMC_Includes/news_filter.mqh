@@ -3,7 +3,8 @@
 // ============================================
 
 // External variables (declared in main file, accessible here)
-// g_EnableNewsFilter, g_NewsAvoidBeforeMinutes, g_NewsAvoidAfterMinutes, g_CloseTradesBeforeNews are from main file
+// g_EnableNewsFilter, g_CloseTradesBeforeNews are from main file
+// Note: High-impact news is hardcoded with 30 min before/after windows
 // MagicNumber is from main file
 // GetCSTHour() is from session.mqh
 
@@ -273,9 +274,9 @@ bool IsNewsTime()
                 // Calculate time difference in minutes
                 int diffMinutes = currentMinutes - newsMinutes;
                 
-                // User-configured news: Use configurable minutes
-                int avoidBefore = (g_NewsAvoidBeforeMinutes > 0) ? g_NewsAvoidBeforeMinutes : 30;
-                int avoidAfter = (g_NewsAvoidAfterMinutes > 0) ? g_NewsAvoidAfterMinutes : 60;
+                // User-configured news: Use hardcoded 30 min before, 60 min after (custom news events removed)
+                int avoidBefore = 30;
+                int avoidAfter = 60;
                 
                 if(diffMinutes >= -avoidBefore && diffMinutes <= avoidAfter)
                 {
@@ -378,8 +379,8 @@ bool IsNewsApproaching()
                 int newsMinutes = (newsHour * 60) + newsMinute;
                 int diffMinutes = newsMinutes - currentMinutes;
                 
-                // User-configured news: Use configurable minutes
-                int avoidBefore = (g_NewsAvoidBeforeMinutes > 0) ? g_NewsAvoidBeforeMinutes : 30;
+                // User-configured news: Use hardcoded 30 min before (custom news events removed)
+                int avoidBefore = 30;
                 if(diffMinutes > 0 && diffMinutes <= avoidBefore)
                 {
                     return true;
