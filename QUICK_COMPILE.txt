@@ -1,0 +1,59 @@
+========================================
+QUICK COMPILE GUIDE
+========================================
+
+ALL FILES ARE SAVED AND READY!
+
+✓ SMC_Session_EA.mq4 - Contains time export code
+✓ SMC_Includes\dashboard_export.mqh - Contains time formatting
+✓ All changes are saved to disk
+
+========================================
+3 SIMPLE STEPS TO COMPILE:
+========================================
+
+STEP 1: Open MetaEditor
+------------------------
+- In MT4, press F4
+- OR: Tools → MetaQuotes Language Editor
+
+STEP 2: Open & Save File
+-------------------------
+- Press Ctrl+O
+- Navigate to: C:\Users\test\OneDrive\Desktop\Trading\all bots\SMC_Sessions_EA
+- Open: SMC_Session_EA.mq4
+- Press Ctrl+S to SAVE (important!)
+- Check tab - no asterisk (*) should appear
+
+STEP 3: Compile
+---------------
+- Press F7
+- Check bottom panel: "0 error(s), 0 warning(s)"
+- Done!
+
+========================================
+AFTER COMPILATION:
+========================================
+
+1. Restart Strategy Tester
+2. Wait 5-10 seconds
+3. Check JSON file - should now have:
+   "brokerTime12hr": "10:44 AM"
+   "cstTime12hr": "2:44 AM"
+4. Check Dashboard - times should appear in header
+
+========================================
+VERIFICATION:
+========================================
+
+After compiling, check this file:
+C:\Users\test\AppData\Roaming\MetaQuotes\Terminal\...\MQL4\Files\SMC_Dashboard.json
+
+Look for these lines:
+  "brokerTime12hr": "10:44 AM",
+  "cstTime12hr": "2:44 AM",
+
+If they exist = SUCCESS! ✅
+If missing = EA not recompiled ❌
+
+========================================

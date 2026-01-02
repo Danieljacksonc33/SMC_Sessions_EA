@@ -369,16 +369,16 @@ bool PlaceTrade(BiasType bias)
         if(displacementRange <= 0) return false;
         
         // Calculate optimal stop loss using hybrid logic
-        string slReason = "";
-        if(!CalculateHybridStopLoss(bias, FVGEntry, stopLoss, riskDistance, slReason))
+        string slReason2 = "";
+        if(!CalculateHybridStopLoss(bias, FVGEntry, stopLoss, riskDistance, slReason2))
         {
             // Trade invalidated by safety check (SL in wrong position relative to Asian range)
-            LogTrade("Trade invalidated: " + slReason);
+            LogTrade("Trade invalidated: " + slReason2);
             return false;
         }
         
         // Log which SL was chosen and why
-        LogTrade("Stop Loss Calculation: " + slReason);
+        LogTrade("Stop Loss Calculation: " + slReason2);
         
         // Use manual TP if enabled, otherwise use 1:2 R:R
         if(g_UseManualTakeProfit && g_ManualTakeProfitPips > 0)

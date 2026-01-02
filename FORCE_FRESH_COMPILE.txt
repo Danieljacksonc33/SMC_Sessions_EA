@@ -1,0 +1,108 @@
+========================================
+FORCE FRESH COMPILATION - STEP BY STEP
+========================================
+
+The EA might be using an old cached .ex4 file.
+Follow these steps to force a fresh compilation:
+
+STEP 1: Stop EA Completely
+---------------------------
+1. Remove EA from ALL charts
+2. Disable AutoTrading (button should be RED)
+3. Close MT4 completely (File → Exit)
+
+STEP 2: Delete Old Compiled File
+---------------------------------
+1. Open Windows File Explorer
+2. Navigate to:
+   C:\Users\test\AppData\Roaming\MetaQuotes\Terminal\[YOUR_TERMINAL_ID]\MQL4\Experts
+   
+   OR use this path (replace YOUR_TERMINAL_ID):
+   %APPDATA%\MetaQuotes\Terminal\[YOUR_TERMINAL_ID]\MQL4\Experts
+   
+3. Find: SMC_Session_EA.ex4
+4. DELETE it (or rename to .ex4.old)
+5. This forces MT4 to compile fresh from .mq4 source
+
+STEP 3: Open MetaEditor
+------------------------
+1. Start MT4
+2. Press F4 to open MetaEditor
+
+STEP 4: Open Source File
+------------------------
+1. In Navigator, RIGHT-CLICK on SMC_Session_EA.mq4
+2. Select "Open" (NOT double-click - that opens inputs)
+3. File should open in editor with code visible
+
+STEP 5: Verify Code is There
+-----------------------------
+Scroll to around line 393-398, you should see:
+```
+// Display current times in 12-hour format (always show, regardless of mode)
+// Do this BEFORE validation so it always prints
+Print("=== TIME CHECK START ===");
+string brokerTime12hr = FormatTime12Hour(TimeCurrent());
+datetime cstTime = GetCSTTime(TimeCurrent());
+string cstTime12hr = FormatTime12Hour(cstTime);
+Print("Current Broker Time: " + brokerTime12hr);
+Print("Current CST Time: " + cstTime12hr);
+Print("=== TIME CHECK END ===");
+```
+
+If you DON'T see this code, the file wasn't saved properly.
+
+STEP 6: Save and Compile
+-------------------------
+1. Press Ctrl+S (save)
+2. Press F7 (compile)
+3. Check bottom panel:
+   - Should say: "0 error(s), 0 warning(s)"
+   - If errors, let me know what they are
+
+STEP 7: Verify .ex4 File Created
+----------------------------------
+1. In MetaEditor Navigator, find SMC_Session_EA.ex4
+2. Check its "Modified" date/time
+3. Should be JUST NOW (current time)
+4. If old date, compilation didn't work
+
+STEP 8: Restart MT4
+--------------------
+1. Close MetaEditor
+2. Close MT4 completely
+3. Restart MT4
+4. This ensures fresh .ex4 is loaded
+
+STEP 9: Attach EA and Check Log
+--------------------------------
+1. Drag SMC_Session_EA onto chart
+2. Enable AutoTrading
+3. Open Experts tab
+4. Look for these lines:
+   === TIME CHECK START ===
+   Current Broker Time: 10:57 AM
+   Current CST Time: 2:57 AM
+   === TIME CHECK END ===
+
+========================================
+IF STILL NOT WORKING:
+========================================
+
+Check these:
+1. Are you seeing "=== TIME CHECK START ===" in log?
+   - YES → Code is running, but FormatTime12Hour might have issue
+   - NO → EA not recompiled or old .ex4 still being used
+
+2. Check compilation errors:
+   - Open MetaEditor
+   - Press F7
+   - Look at bottom panel for errors
+   - Share any error messages
+
+3. Check file location:
+   - Make sure you're editing the RIGHT file
+   - Should be in: SMC_Sessions_EA folder
+   - Not in MT4's Experts folder directly
+
+========================================

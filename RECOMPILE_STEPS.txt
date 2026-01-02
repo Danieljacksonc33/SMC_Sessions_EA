@@ -1,0 +1,96 @@
+========================================
+STEPS TO SEE TIME IN LOG
+========================================
+
+STEP 1: Stop the EA
+-------------------
+- Right-click on the chart
+- Click "Expert Advisors" → "Remove"
+- OR disable AutoTrading button (turn red)
+
+STEP 2: Open MetaEditor
+------------------------
+- In MT4, press F4
+- OR: Tools → MetaQuotes Language Editor
+
+STEP 3: Open the EA File
+-------------------------
+- In MetaEditor Navigator (left panel)
+- Find: SMC_Session_EA.mq4
+- Double-click to open
+
+STEP 4: Save the File
+----------------------
+- Press Ctrl+S
+- Check tab - no asterisk (*) should appear
+- This ensures latest code is saved
+
+STEP 5: Compile
+---------------
+- Press F7
+- OR: Click "Compile" button (hammer icon)
+- Check bottom panel for result
+
+STEP 6: Verify Compilation
+---------------------------
+- Should see: "0 error(s), 0 warning(s)"
+- If errors appear, let me know
+
+STEP 7: Close MetaEditor
+--------------------------
+- Close MetaEditor window
+- Files are automatically saved
+
+STEP 8: Restart the EA
+-----------------------
+- In MT4, drag SMC_Session_EA from Navigator onto chart
+- OR: Right-click chart → Expert Advisors → SMC_Session_EA
+- Enable AutoTrading (button turns green)
+
+STEP 9: Check the Log
+----------------------
+- Click "Experts" tab at bottom of MT4
+- Look for these lines:
+  Current Broker Time: 10:57 AM
+  Current CST Time: 2:57 AM
+
+========================================
+WHAT YOU SHOULD SEE:
+========================================
+
+In Live Mode:
+-------------
+Current Broker Time: 10:57 AM
+Current CST Time: 2:57 AM
+================================================
+Property of BluePips University.
+Developer: DeeJay Groups
+=== SMC Sessions EA Initialized (Enhanced) ===
+...
+
+In Tester Mode:
+---------------
+Current Broker Time: 10:57 AM
+Current CST Time: 2:57 AM
+[Backtest Summary messages]
+
+During Runtime (every 60 seconds):
+-----------------------------------
+Time Check - Broker: 10:58 AM | CST: 2:58 AM
+Time Check - Broker: 10:59 AM | CST: 2:59 AM
+
+========================================
+TROUBLESHOOTING:
+========================================
+
+If times don't appear:
+1. Make sure you saved (Ctrl+S) before compiling
+2. Make sure compilation showed "0 errors"
+3. Make sure you restarted the EA (removed and reattached)
+4. Check Experts tab, scroll up to see initialization messages
+
+If still not working:
+- Check if EnableDashboardExport is true (should be)
+- The time logging code is in the code, so recompiling should work
+
+========================================

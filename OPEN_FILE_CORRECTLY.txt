@@ -1,0 +1,65 @@
+========================================
+HOW TO OPEN FILE IN METAEDITOR (CORRECT WAY)
+========================================
+
+PROBLEM:
+Double-clicking SMC_Session_EA.mq4 opens input dialog, not the code editor.
+
+SOLUTION - Use one of these methods:
+
+METHOD 1: Right-Click Menu (RECOMMENDED)
+------------------------------------------
+1. In MetaEditor Navigator (left panel)
+2. Find: SMC_Session_EA.mq4
+3. RIGHT-CLICK on the file
+4. Select: "Open" or "Edit" from menu
+5. File opens in editor (not input dialog)
+
+METHOD 2: File Menu
+--------------------
+1. In MetaEditor, click: File → Open
+2. Navigate to: MQL4 → Experts
+3. Select: SMC_Session_EA.mq4
+4. Click: Open
+5. File opens in editor
+
+METHOD 3: Drag and Drop
+------------------------
+1. Open Windows File Explorer
+2. Navigate to: 
+   C:\Users\test\OneDrive\Desktop\Trading\all bots\SMC_Sessions_EA
+3. Drag SMC_Session_EA.mq4 into MetaEditor window
+4. File opens in editor
+
+METHOD 4: Double-Click Tab (If Already Open)
+----------------------------------------------
+1. If file is already open (as a tab)
+2. Double-click the TAB at top
+3. This maximizes/minimizes the editor
+
+========================================
+VERIFY FILE IS OPEN CORRECTLY:
+========================================
+
+You should see:
+- Code editor with MQL4 syntax highlighting
+- Line numbers on the left
+- Code visible (not a settings dialog)
+- Can scroll through the code
+
+You should NOT see:
+- Input parameters dialog
+- Settings window
+- Property window
+
+========================================
+THEN PROCEED WITH:
+========================================
+
+1. Press Ctrl+S to save
+2. Press F7 to compile
+3. Check for "0 error(s), 0 warning(s)"
+4. Close MetaEditor
+5. Restart EA in MT4
+
+========================================

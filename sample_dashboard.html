@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMC Sessions EA Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .last-updated {
+            color: #a0a0a0;
+            font-size: 0.9em;
+        }
+        
+        .timezone-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .time-display {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.2em;
+        }
+        
+        .clock-icon {
+            font-size: 1.5em;
+        }
+        
+        .label {
+            font-weight: bold;
+            color: #4a9eff;
+        }
+        
+        .label.cst {
+            color: #9d4edd;
+        }
+        
+        .time-value {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #fff;
+            min-width: 100px;
+            text-align: left;
+        }
+        
+        .loading {
+            color: #ffa500;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .error {
+            color: #ff4444;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+        }
+        
+        .stat-card h3 {
+            margin-bottom: 10px;
+            color: #4a9eff;
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>SMC Sessions EA Dashboard</h1>
+            <div class="last-updated" id="last-updated">Last Updated: Loading...</div>
+        </div>
+        
+        <div class="timezone-section">
+            <div class="time-display">
+                <span class="clock-icon">🕐</span>
+                <span class="label">Broker:</span>
+                <span class="time-value" id="broker-time">Loading...</span>
+            </div>
+            <div class="time-display">
+                <span class="clock-icon">🕐</span>
+                <span class="label cst">CST:</span>
+                <span class="time-value" id="cst-time">Loading...</span>
+            </div>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Session Status</h3>
+                <div class="stat-value" id="session-status">Loading...</div>
+            </div>
+            <div class="stat-card">
+                <h3>Current CST Hour</h3>
+                <div class="stat-value" id="cst-hour">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Session Time</h3>
+                <div class="stat-value" id="session-time">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const JSON_FILE_PATH = 'SMC_Dashboard.json'; // Update this path if needed
+        const UPDATE_INTERVAL = 5000; // Update every 5 seconds
+
+        // Function to format timestamp
+        function formatTimestamp(timestamp) {
+            if (!timestamp) return 'N/A';
+            const date = new Date(timestamp * 1000);
+            return date.toLocaleString();
+        }
+
+        // Function to update dashboard
+        function updateDashboard() {
+            fetch(JSON_FILE_PATH)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Dashboard data loaded:', data);
+                    
+                    // Update timezone times (using simple top-level fields)
+                    const brokerTime = data.broker || 
+                                     data.brokerTime || 
+                                     data.brokerTime12hr || 
+                                     (data.timezone && data.timezone.brokerTime12hr) || 
+                                     'Error';
+                    
+                    const cstTime = data.cst || 
+                                  data.cstTime || 
+                                  data.cstTime12hr || 
+                                  (data.timezone && data.timezone.cstTime12hr) || 
+                                  'Error';
+                    
+                    // Update DOM elements
+                    const brokerElement = document.getElementById('broker-time');
+                    const cstElement = document.getElementById('cst-time');
+                    
+                    if (brokerTime === 'Error') {
+                        brokerElement.textContent = 'Error';
+                        brokerElement.className = 'time-value error';
+                    } else {
+                        brokerElement.textContent = brokerTime;
+                        brokerElement.className = 'time-value';
+                    }
+                    
+                    if (cstTime === 'Error') {
+                        cstElement.textContent = 'Error';
+                        cstElement.className = 'time-value error';
+                    } else {
+                        cstElement.textContent = cstTime;
+                        cstElement.className = 'time-value';
+                    }
+                    
+                    // Update last updated timestamp
+                    if (data.timestamp) {
+                        document.getElementById('last-updated').textContent = 
+                            'Last Updated: ' + formatTimestamp(data.timestamp);
+                    }
+                    
+                    // Update session info
+                    if (data.session) {
+                        const sessionStatus = data.session.inSession ? 'IN SESSION' : 'OUT OF SESSION';
+                        document.getElementById('session-status').textContent = sessionStatus;
+                        
+                        if (data.session.currentHour !== undefined) {
+                            document.getElementById('cst-hour').textContent = data.session.currentHour;
+                        }
+                        
+                        if (data.session.sessionDisplay) {
+                            document.getElementById('session-time').textContent = data.session.sessionDisplay;
+                        } else if (data.session.sessionStart12hr && data.session.sessionEnd12hr) {
+                            document.getElementById('session-time').textContent = 
+                                data.session.sessionStart12hr + ' - ' + data.session.sessionEnd12hr + ' CST';
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading dashboard:', error);
+                    
+                    // Show error in UI
+                    document.getElementById('broker-time').textContent = 'Error';
+                    document.getElementById('broker-time').className = 'time-value error';
+                    document.getElementById('cst-time').textContent = 'Error';
+                    document.getElementById('cst-time').className = 'time-value error';
+                    document.getElementById('last-updated').textContent = 'Error: ' + error.message;
+                });
+        }
+
+        // Initial load
+        updateDashboard();
+
+        // Set up auto-refresh
+        setInterval(updateDashboard, UPDATE_INTERVAL);
+
+        // Log for debugging
+        console.log('Dashboard initialized. JSON file path:', JSON_FILE_PATH);
+        console.log('Update interval:', UPDATE_INTERVAL, 'ms');
+    </script>
+</body>
+</html>

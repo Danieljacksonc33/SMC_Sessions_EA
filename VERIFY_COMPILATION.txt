@@ -1,0 +1,85 @@
+========================================
+TROUBLESHOOTING: TIME MESSAGES NOT APPEARING
+========================================
+
+The code is in place, but you're not seeing the messages.
+Let's verify step by step:
+
+STEP 1: Verify Code is Saved
+-----------------------------
+1. Open MetaEditor (F4)
+2. Right-click SMC_Session_EA.mq4 → Open
+3. Press Ctrl+F (Find)
+4. Search for: "TIME CHECK START"
+5. You should find it around line 380
+6. If NOT found → File not saved properly
+
+STEP 2: Check for Compilation Errors
+-------------------------------------
+1. In MetaEditor, press F7
+2. Look at BOTTOM panel (not just "0 errors")
+3. Check for ANY warnings or messages
+4. If you see errors about FormatTime12Hour or GetCSTTime:
+   → The functions aren't accessible
+   → Need to check include order
+
+STEP 3: Verify Functions Exist
+-------------------------------
+1. In MetaEditor, press Ctrl+F
+2. Search for: "FormatTime12Hour"
+3. Should find it in dashboard_export.mqh
+4. If NOT found → Function missing
+
+STEP 4: Check EA is Actually Running
+--------------------------------------
+1. In MT4 Experts tab, look for:
+   - "initialized" message
+   - "News Filter: Disabled" message
+2. If you see these → EA is running
+3. If you DON'T see "=== TIME CHECK START ===" → Code not executing
+
+STEP 5: Check Line Numbers
+---------------------------
+The time check code should be at line 378-386.
+If it's NOT there, the file wasn't saved.
+
+STEP 6: Force Recompile
+-----------------------
+1. Close MT4 completely
+2. Delete .ex4 file (I already did this)
+3. Open MetaEditor
+4. Open SMC_Session_EA.mq4
+5. Press Ctrl+S (save)
+6. Press F7 (compile)
+7. Check bottom: "0 error(s), 0 warning(s)"
+8. Close MetaEditor
+9. Restart MT4
+10. Attach EA
+
+========================================
+WHAT TO CHECK IN LOG:
+========================================
+
+Look for these EXACT messages:
+- "=== TIME CHECK START ==="
+- "TEST: Code is executing at line 380"
+- "Current Broker Time: XX:XX AM/PM"
+- "Current CST Time: XX:XX AM/PM"
+- "=== TIME CHECK END ==="
+
+If you see "TEST: Code is executing" but NOT the times:
+→ Functions have an issue
+
+If you DON'T see "=== TIME CHECK START ===":
+→ Code not executing (EA failing before that point)
+
+========================================
+ALTERNATIVE: Check Compilation Log
+========================================
+
+1. In MetaEditor, after pressing F7
+2. Look at the compilation log
+3. Copy any errors/warnings
+4. Share them with me
+
+========================================

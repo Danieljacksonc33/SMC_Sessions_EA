@@ -1,0 +1,146 @@
+========================================
+WHAT TO SEE IN THE EXPERTS LOG
+========================================
+
+When you attach the EA to a chart and it initializes successfully,
+you should see the following messages in the Experts tab:
+
+========================================
+1. INITIALIZATION MESSAGES (On Start)
+========================================
+
+✅ SUCCESSFUL INITIALIZATION:
+================================================
+Property of BluePips University.
+Developer: DeeJay Groups
+Any illegal use will result in Legal action
+Trading involves Risk, use proper risk management.
+================================================
+=== SMC Sessions EA Initialized (Enhanced) ===
+Magic Number: 123456
+Risk Per Trade: 0.50%
+Session: 2:00 - 5:00 CST
+Max Trades/Day: 1
+Max Pairs Trading: 2 (limit active)
+Market Filter: Enabled (Trending Only)
+Entry Filters: Volume=ON Momentum=ON S/R=ON
+Trade Management: Enabled
+Statistics: Enabled
+Analytics: Enabled
+Safety Checks: Enabled
+Alerts: Enabled (Popup=ON Email=OFF Push=OFF)
+Visual Indicator: Enabled (blinking star every 5 min)
+News Filter: Disabled
+===================================
+
+❌ IF YOU SEE ERRORS:
+- "ERROR: Symbol validation failed" → Check symbol name
+- "Cannot open include file" → Check SMC_Includes folder
+- Compilation errors → Recompile in MetaEditor
+
+========================================
+2. DURING RUNTIME (Normal Operation)
+========================================
+
+✅ ASIAN RANGE CALCULATION:
+2026.01.02 10:44 : Asian range calculated: High 1.17648, Low 1.17499
+
+✅ LIQUIDITY SWEEP DETECTED:
+2026.01.02 10:45 : Liquidity sweep detected (High) at 1.17650
+
+✅ CHOCH DETECTED:
+2026.01.02 10:46 : CHOCH detected (Bullish)
+
+✅ FVG CALCULATED:
+2026.01.02 10:47 : FVG calculated, entry at 1.17550
+
+✅ TRADE PLACED:
+2026.01.02 10:48 : Trade placed: BUY 0.01 lots at 1.17550
+2026.01.02 10:48 : Stop Loss: 1.17450 (20 pips)
+2026.01.02 10:48 : Take Profit: 1.17750 (40 pips)
+
+✅ TRADE MANAGEMENT:
+2026.01.02 10:50 : Break-even moved to entry price
+2026.01.02 10:55 : Trailing stop activated
+
+✅ TRADE CLOSED:
+2026.01.02 11:00 : Trade closed: Ticket 12345, Profit: +$5.00
+
+========================================
+3. FILTER MESSAGES (Why Trades Blocked)
+========================================
+
+❌ MARKET FILTER BLOCKING:
+2026.01.02 10:44 : Market filter: ATR too low (8.5 pips, minimum 10.0)
+2026.01.02 10:44 : Market filter: Not trending (ADX: 20, required: 25)
+
+❌ ENTRY FILTER BLOCKING:
+2026.01.02 10:44 : Entry filter: Volume too low (0.8x average, required 1.2x)
+2026.01.02 10:44 : Entry filter: RSI momentum insufficient (45, required 50)
+
+❌ SESSION BLOCKING:
+2026.01.02 10:44 : Outside trading session (current hour: 6, session: 2-5)
+
+❌ SAFETY CHECKS:
+2026.01.02 10:44 : Daily loss limit reached (5.0%)
+2026.01.02 10:44 : Max trades per day reached (1/1)
+
+========================================
+4. DASHBOARD EXPORT (If Enabled)
+========================================
+
+✅ DASHBOARD EXPORT (every 5 seconds):
+- No visible log messages (silent operation)
+- Check SMC_Dashboard.json file in MQL4/Files folder
+- Should contain brokerTime12hr and cstTime12hr fields
+
+========================================
+5. DAILY RESET (At Midnight CST)
+========================================
+
+✅ DAILY RESET:
+2026.01.03 00:00 : Daily reset: All flags cleared
+2026.01.03 00:00 : Asian range calculated: High 1.17700, Low 1.17500
+
+========================================
+6. DEINITIALIZATION (On Stop/Remove)
+========================================
+
+✅ CLEAN SHUTDOWN:
+SMC Sessions EA deinitialized
+
+========================================
+WHAT TO CHECK IF SOMETHING'S WRONG:
+========================================
+
+1. NO INITIALIZATION MESSAGE?
+   → EA not attached properly
+   → AutoTrading disabled
+   → Check Experts tab for errors
+
+2. NO RUNTIME MESSAGES?
+   → EA is waiting for session time
+   → Check current time vs session hours
+   → Check if filters are blocking
+
+3. TOO MANY FILTER BLOCKS?
+   → Filters may be too strict
+   → Consider adjusting filter settings
+   → Check market conditions
+
+4. DASHBOARD NOT UPDATING?
+   → Check EnableDashboardExport = true
+   → Check JSON file exists in MQL4/Files
+   → Wait 5-10 seconds for first export
+
+========================================
+HOW TO VIEW THE LOG:
+========================================
+
+1. Open MT4
+2. Click "Experts" tab at bottom
+3. Scroll to see all messages
+4. Right-click → "Clear" to clear log
+5. Right-click → "Save" to save log
+
+========================================

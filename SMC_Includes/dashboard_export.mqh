@@ -2,6 +2,45 @@
 // Dashboard Export - File-based Web Dashboard
 // ============================================
 
+// Helper function to format time in 12-hour format (AM/PM)
+string FormatTime12Hour(datetime time)
+{
+    MqlDateTime dt;
+    TimeToStruct(time, dt);
+    
+    int hour12 = dt.hour;
+    string ampm = "AM";
+    
+    if(hour12 == 0)
+        hour12 = 12; // Midnight
+    else if(hour12 == 12)
+        ampm = "PM"; // Noon
+    else if(hour12 > 12)
+    {
+        hour12 -= 12;
+        ampm = "PM";
+    }
+    
+    string timeStr = StringFormat("%d:%02d %s", hour12, dt.min, ampm);
+    return timeStr;
+}
+
+// Helper function to get CST time from broker time
+datetime GetCSTTime(datetime brokerTime)
+{
+    // Use global variable from main file (g_TimezoneOffset) or default
+    int tzOffset = TIMEZONE_OFFSET; // Default
+    if(g_TimezoneOffset >= -12 && g_TimezoneOffset <= 14)
+        tzOffset = g_TimezoneOffset;
+    
+    // Convert timezone offset from hours to seconds
+    // CST = UTC-6, so if broker is UTC+2, offset = -8 to get CST
+    // To convert broker time to CST: brokerTime + (offset * 3600 seconds)
+    datetime cstTime = brokerTime + (tzOffset * 3600);
+    
+    return cstTime;
+}
+
 // Launch dashboard automatically (called once on init if autotrading enabled)
 // Uses file-based trigger system since MQL4 cannot execute external programs directly
 void LaunchDashboard()
@@ -91,20 +130,87 @@ void ExportDashboardData()
     json += "  \"equity\": " + DoubleToString(AccountEquity(), 2) + ",\n";
     json += "  \"magicNumber\": " + IntegerToString(MagicNumber) + ",\n";
     
-    // Current time
+    // Current time (broker time)
     MqlDateTime dt;
     TimeToStruct(TimeCurrent(), dt);
     json += "  \"currentTime\": \"" + TimeToString(TimeCurrent(), TIME_DATE|TIME_MINUTES) + "\",\n";
     
-    // Session info
+    // Calculate CST time
+    datetime cstTime = GetCSTTime(TimeCurrent());
+    MqlDateTime cstDt;
+    TimeToStruct(cstTime, cstDt);
+    
+    // Format times in 12-hour format
+    string brokerTime12hr = FormatTime12Hour(TimeCurrent());
+    string cstTime12hr = FormatTime12Hour(cstTime);
+    
+    // Get CST hour for session checking
     int hour = GetCSTHour(TimeCurrent());
+    
+    // Timezone information section (all in 12-hour format for display)
+    json += "  \"timezone\": {\n";
+    json += "    \"brokerTime12hr\": \"" + brokerTime12hr + "\",\n";
+    json += "    \"cstTime12hr\": \"" + cstTime12hr + "\",\n";
+    json += "    \"displayTime\": \"" + brokerTime12hr + " (Broker) / " + cstTime12hr + " (CST)\",\n";
+    json += "    \"brokerHour\": " + IntegerToString(dt.hour) + ",\n";
+    json += "    \"cstHour\": " + IntegerToString(hour) + ",\n";
+    json += "    \"timezoneOffset\": " + IntegerToString(g_TimezoneOffset) + ",\n";
+    int brokerUTC = g_TimezoneOffset + 6; // CST is UTC-6, so broker UTC = offset + 6
+    string offsetDesc = "CST UTC-6 - Broker UTC" + (brokerUTC >= 0 ? "+" : "") + IntegerToString(brokerUTC) + " = " + IntegerToString(g_TimezoneOffset);
+    json += "    \"timezoneOffsetDescription\": \"" + offsetDesc + "\"\n";
+    json += "  },\n";
+    
+    // Legacy fields for backward compatibility (12-hour format)
+    json += "  \"brokerTime12hr\": \"" + brokerTime12hr + "\",\n";
+    json += "  \"cstTime12hr\": \"" + cstTime12hr + "\",\n";
+    
+    // Simple top-level fields for dashboard compatibility (12-hour format)
+    json += "  \"broker\": \"" + brokerTime12hr + "\",\n";
+    json += "  \"cst\": \"" + cstTime12hr + "\",\n";
+    json += "  \"brokerTime\": \"" + brokerTime12hr + "\",\n";
+    json += "  \"cstTime\": \"" + cstTime12hr + "\",\n";
+    
+    // Session info (with 12-hour format display)
     bool inSession = IsTradingSession();
+    
+    // Format session times in 12-hour format
+    string sessionStart12hr = "";
+    string sessionEnd12hr = "";
+    if(g_SessionStartHour == 0) sessionStart12hr = "12:00 AM";
+    else if(g_SessionStartHour == 12) sessionStart12hr = "12:00 PM";
+    else if(g_SessionStartHour < 12) sessionStart12hr = IntegerToString(g_SessionStartHour) + ":00 AM";
+    else sessionStart12hr = IntegerToString(g_SessionStartHour - 12) + ":00 PM";
+    
+    if(g_SessionEndHour == 0) sessionEnd12hr = "12:00 AM";
+    else if(g_SessionEndHour == 12) sessionEnd12hr = "12:00 PM";
+    else if(g_SessionEndHour < 12) sessionEnd12hr = IntegerToString(g_SessionEndHour) + ":00 AM";
+    else sessionEnd12hr = IntegerToString(g_SessionEndHour - 12) + ":00 PM";
+    
     json += "  \"session\": {\n";
     json += "    \"inSession\": " + (inSession ? "true" : "false") + ",\n";
     json += "    \"currentHour\": " + IntegerToString(hour) + ",\n";
+    json += "    \"currentTime12hr\": \"" + cstTime12hr + "\",\n";
     json += "    \"sessionStart\": " + IntegerToString(g_SessionStartHour) + ",\n";
-    json += "    \"sessionEnd\": " + IntegerToString(g_SessionEndHour) + "\n";
+    json += "    \"sessionStart12hr\": \"" + sessionStart12hr + "\",\n";
+    json += "    \"sessionEnd\": " + IntegerToString(g_SessionEndHour) + ",\n";
+    json += "    \"sessionEnd12hr\": \"" + sessionEnd12hr + "\",\n";
+    json += "    \"sessionDisplay\": \"" + sessionStart12hr + " - " + sessionEnd12hr + " CST\"\n";
     json += "  },\n";
+    
+    // Log times to Experts tab (every 60 seconds when dashboard exports)
+    static datetime lastTimeLog = 0;
+    if(TimeCurrent() - lastTimeLog >= 60) // Log every 60 seconds to avoid spam
+    {
+        Print("=== Timezone Verification ===");
+        Print("Broker Time (12hr): " + brokerTime12hr);
+        Print("CST Time (12hr): " + cstTime12hr);
+        Print("CST Hour: " + IntegerToString(hour));
+        Print("Timezone Offset: " + IntegerToString(g_TimezoneOffset));
+        Print("Session: " + sessionStart12hr + " - " + sessionEnd12hr + " CST");
+        Print("In Session: " + (inSession ? "YES" : "NO"));
+        Print("===========================");
+        lastTimeLog = TimeCurrent();
+    }
     
     // Asian range
     json += "  \"asianRange\": {\n";
@@ -153,28 +259,72 @@ void ExportDashboardData()
     int openCount = 0;
     double openProfit = 0;
     double openProfitPips = 0;
-    for(int i = 0; i < OrdersTotal(); i++)
+    for(int oi = 0; oi < OrdersTotal(); oi++)
     {
-        if(OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
+        if(OrderSelect(oi, SELECT_BY_POS, MODE_TRADES))
         {
             if(OrderSymbol() == Symbol() && OrderMagicNumber() == MagicNumber)
             {
                 openCount++;
-                double profit = OrderProfit() + OrderSwap() + OrderCommission();
-                openProfit += profit;
+                double orderProfit = OrderProfit() + OrderSwap() + OrderCommission();
+                openProfit += orderProfit;
                 
                 // Calculate profit in pips
-                double point = Point;
+                double orderPoint = Point;
                 if(OrderType() == OP_BUY)
-                    openProfitPips += (Bid - OrderOpenPrice()) / point / 10;
+                    openProfitPips += (Bid - OrderOpenPrice()) / orderPoint / 10;
                 else if(OrderType() == OP_SELL)
-                    openProfitPips += (OrderOpenPrice() - Ask) / point / 10;
+                    openProfitPips += (OrderOpenPrice() - Ask) / orderPoint / 10;
             }
         }
     }
     json += "    \"openTrades\": " + IntegerToString(openCount) + ",\n";
     json += "    \"openProfit\": " + DoubleToString(openProfit, 2) + ",\n";
     json += "    \"openProfitPips\": " + DoubleToString(openProfitPips, 1) + "\n";
+    json += "  },\n";
+    
+    // Daily Trade Statistics (for current day)
+    datetime todayStart = GetCurrentDate();
+    int dailyTrades = 0;
+    int dailyWins = 0;
+    int dailyLosses = 0;
+    double dailyProfit = 0;
+    
+    // Count today's closed trades
+    int historyTotal1 = OrdersHistoryTotal();
+    for(int h = historyTotal1 - 1; h >= 0; h--)
+    {
+        if(OrderSelect(h, SELECT_BY_POS, MODE_HISTORY))
+        {
+            if(OrderSymbol() == Symbol() && OrderMagicNumber() == MagicNumber && OrderCloseTime() >= todayStart)
+            {
+                dailyTrades++;
+                double dailyOrderProfit = OrderProfit() + OrderSwap() + OrderCommission();
+                dailyProfit += dailyOrderProfit;
+                if(dailyOrderProfit > 0) dailyWins++;
+                else if(dailyOrderProfit < 0) dailyLosses++;
+            }
+        }
+    }
+    
+    // Add today's open trades to count (taken today)
+    for(int o = 0; o < OrdersTotal(); o++)
+    {
+        if(OrderSelect(o, SELECT_BY_POS, MODE_TRADES))
+        {
+            if(OrderSymbol() == Symbol() && OrderMagicNumber() == MagicNumber && OrderOpenTime() >= todayStart)
+            {
+                dailyTrades++;
+            }
+        }
+    }
+    
+    json += "  \"dailyStats\": {\n";
+    json += "    \"tradesToday\": " + IntegerToString(dailyTrades) + ",\n";
+    json += "    \"winsToday\": " + IntegerToString(dailyWins) + ",\n";
+    json += "    \"lossesToday\": " + IntegerToString(dailyLosses) + ",\n";
+    json += "    \"profitToday\": " + DoubleToString(dailyProfit, 2) + ",\n";
+    json += "    \"winRateToday\": " + (dailyTrades > 0 ? DoubleToString((double(dailyWins) / double(dailyTrades)) * 100.0, 1) : "0.0") + "\n";
     json += "  },\n";
     
     // Multi-pair limit status
@@ -205,16 +355,16 @@ void ExportDashboardData()
     
     // Trade History - Recent closed trades
     json += "  \"tradeHistory\": [\n";
-    int historyTotal = OrdersHistoryTotal();
+    int historyTotal2 = OrdersHistoryTotal();
     int tradeCount = 0;
     int maxTradesToShow = 20; // Show last 20 trades
     int bullishWins = 0, bullishLosses = 0;
     int bearishWins = 0, bearishLosses = 0;
     
     // Loop through history from most recent to oldest
-    for(int i = historyTotal - 1; i >= 0 && tradeCount < maxTradesToShow; i--)
+    for(int hi = historyTotal2 - 1; hi >= 0 && tradeCount < maxTradesToShow; hi--)
     {
-        if(OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))
+        if(OrderSelect(hi, SELECT_BY_POS, MODE_HISTORY))
         {
             // Only include trades for this symbol and magic number
             if(OrderSymbol() == Symbol() && OrderMagicNumber() == MagicNumber)
@@ -222,8 +372,8 @@ void ExportDashboardData()
                 if(tradeCount > 0) json += ",\n";
                 
                 string orderType = (OrderType() == OP_BUY) ? "BULLISH" : "BEARISH";
-                double profit = OrderProfit() + OrderSwap() + OrderCommission();
-                bool isWin = (profit > 0);
+                double historyProfit = OrderProfit() + OrderSwap() + OrderCommission();
+                bool isWin = (historyProfit > 0);
                 
                 // Count wins/losses by type
                 if(OrderType() == OP_BUY)
@@ -239,11 +389,11 @@ void ExportDashboardData()
                 
                 // Calculate profit in pips
                 double profitPips = 0;
-                double point = Point;
+                double historyPoint = Point;
                 if(OrderType() == OP_BUY)
-                    profitPips = (OrderClosePrice() - OrderOpenPrice()) / point / 10;
+                    profitPips = (OrderClosePrice() - OrderOpenPrice()) / historyPoint / 10;
                 else if(OrderType() == OP_SELL)
-                    profitPips = (OrderOpenPrice() - OrderClosePrice()) / point / 10;
+                    profitPips = (OrderOpenPrice() - OrderClosePrice()) / historyPoint / 10;
                 
                 json += "    {\n";
                 json += "      \"ticket\": " + IntegerToString(OrderTicket()) + ",\n";
@@ -252,7 +402,7 @@ void ExportDashboardData()
                 json += "      \"closeTime\": \"" + TimeToString(OrderCloseTime(), TIME_DATE|TIME_MINUTES) + "\",\n";
                 json += "      \"openPrice\": " + DoubleToString(OrderOpenPrice(), 5) + ",\n";
                 json += "      \"closePrice\": " + DoubleToString(OrderClosePrice(), 5) + ",\n";
-                json += "      \"profit\": " + DoubleToString(profit, 2) + ",\n";
+                json += "      \"profit\": " + DoubleToString(historyProfit, 2) + ",\n";
                 json += "      \"profitPips\": " + DoubleToString(profitPips, 1) + ",\n";
                 json += "      \"isWin\": " + (isWin ? "true" : "false") + "\n";
                 json += "    }";
@@ -270,10 +420,10 @@ void ExportDashboardData()
     json += "    \"bullishLosses\": " + IntegerToString(bullishLosses) + ",\n";
     json += "    \"bearishWins\": " + IntegerToString(bearishWins) + ",\n";
     json += "    \"bearishLosses\": " + IntegerToString(bearishLosses) + ",\n";
-    int totalWins = bullishWins + bearishWins;
-    int totalLosses = bullishLosses + bearishLosses;
-    json += "    \"totalWins\": " + IntegerToString(totalWins) + ",\n";
-    json += "    \"totalLosses\": " + IntegerToString(totalLosses) + "\n";
+    int historyTotalWins = bullishWins + bearishWins;
+    int historyTotalLosses = bullishLosses + bearishLosses;
+    json += "    \"totalWins\": " + IntegerToString(historyTotalWins) + ",\n";
+    json += "    \"totalLosses\": " + IntegerToString(historyTotalLosses) + "\n";
     json += "  },\n";
     
     // Current price
@@ -285,7 +435,13 @@ void ExportDashboardData()
     
     json += "}\n";
     
+    // Determine if we're in tester or live mode
+    bool isTester = (MQLInfoInteger(MQL_TESTER) || MQLInfoInteger(MQL_OPTIMIZATION) || MQLInfoInteger(MQL_VISUAL_MODE));
+    string modeStr = isTester ? "Strategy Tester" : "Live Trading";
+    
     // Write to file (in MT4 data folder, Files subdirectory)
+    // Note: In Strategy Tester, FileOpen() automatically uses tester\files folder
+    //       In Live trading, FileOpen() automatically uses MQL4\Files folder
     int handle = FileOpen("SMC_Dashboard.json", FILE_WRITE|FILE_TXT);
     if(handle != INVALID_HANDLE)
     {
@@ -294,8 +450,22 @@ void ExportDashboardData()
     }
     else
     {
-        // Log error for debugging
+        // Log error for debugging with mode information
         int error = GetLastError();
-        Print("Dashboard Export Error: Cannot open SMC_Dashboard.json file. Error code: ", error);
+        
+        // Create clear error message indicating which mode is being used
+        string modeInfo = "";
+        if(isTester)
+        {
+            modeInfo = "Dashboard being used by tester";
+        }
+        else
+        {
+            modeInfo = "Dashboard being used by live account";
+        }
+        
+        string errorMsg = "Dashboard Export Error: Cannot open SMC_Dashboard.json file. Error code: " + IntegerToString(error) + ". " + modeInfo;
+        
+        Print(errorMsg);
     }
 }

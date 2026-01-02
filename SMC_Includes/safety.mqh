@@ -5,6 +5,46 @@
 // External variables (defined in main file, declared here for access)
 // These will be available from main file's extern declarations
 
+// Helper function to format time in 12-hour format (AM/PM)
+string FormatTime12Hour(datetime time)
+{
+    MqlDateTime dt;
+    TimeToStruct(time, dt);
+    
+    int hour12 = dt.hour;
+    string ampm = "AM";
+    
+    if(hour12 == 0)
+        hour12 = 12; // Midnight
+    else if(hour12 == 12)
+        ampm = "PM"; // Noon
+    else if(hour12 > 12)
+    {
+        hour12 -= 12;
+        ampm = "PM";
+    }
+    
+    string timeStr = StringFormat("%d:%02d %s", hour12, dt.min, ampm);
+    return timeStr;
+}
+
+// Helper function to get CST time from broker time
+datetime GetCSTTime(datetime brokerTime)
+{
+    // Use global variable from main file (g_TimezoneOffset) or default
+    #ifndef TIMEZONE_OFFSET
+    #define TIMEZONE_OFFSET -8
+    #endif
+    int tzOffset = TIMEZONE_OFFSET; // Default CST offset
+    if(g_TimezoneOffset >= -12 && g_TimezoneOffset <= 14)
+        tzOffset = g_TimezoneOffset;
+    
+    // Convert broker time to CST by adding the offset in seconds
+    datetime cstTime = brokerTime + (tzOffset * 3600);
+    
+    return cstTime;
+}
+
 // Check if we can trade (safety checks)
 bool CanTradeSafely()
 {
@@ -51,7 +91,12 @@ bool CanTradeSafely()
         static datetime lastMaxTradesLog = 0;
         if(TimeCurrent() - lastMaxTradesLog > 3600) // Log once per hour
         {
-            LogTrade("Max trades per day reached: " + IntegerToString(tradeCount) + "/" + IntegerToString(maxTrades));
+            // Include time in safety check log
+            string brokerTime12hr = FormatTime12Hour(TimeCurrent());
+            datetime cstTime = GetCSTTime(TimeCurrent());
+            string cstTime12hr = FormatTime12Hour(cstTime);
+            LogTrade("Max trades per day reached: " + IntegerToString(tradeCount) + "/" + IntegerToString(maxTrades) + 
+                    " | Broker: " + brokerTime12hr + " | CST: " + cstTime12hr);
             lastMaxTradesLog = TimeCurrent();
         }
         return false;
@@ -81,7 +126,12 @@ bool CanTradeSafely()
             static datetime lastDrawdownLog = 0;
             if(TimeCurrent() - lastDrawdownLog > 3600) // Log once per hour
             {
-                LogTrade("Max drawdown reached: " + DoubleToString(drawdown, 2) + "%");
+                // Include time in safety check log
+                string brokerTime12hr = FormatTime12Hour(TimeCurrent());
+                datetime cstTime = GetCSTTime(TimeCurrent());
+                string cstTime12hr = FormatTime12Hour(cstTime);
+                LogTrade("Max drawdown reached: " + DoubleToString(drawdown, 2) + "%" + 
+                        " | Broker: " + brokerTime12hr + " | CST: " + cstTime12hr);
                 lastDrawdownLog = TimeCurrent();
             }
             return false;
@@ -97,7 +147,11 @@ bool ValidateSymbol()
     // Check if symbol is tradeable (MQL4)
     if(MarketInfo(Symbol(), MODE_TRADEALLOWED) == 0)
     {
-        LogTrade("Symbol not tradeable: " + Symbol());
+        string brokerTime12hr = FormatTime12Hour(TimeCurrent());
+        datetime cstTime = GetCSTTime(TimeCurrent());
+        string cstTime12hr = FormatTime12Hour(cstTime);
+        LogTrade("Symbol not tradeable: " + Symbol() + 
+                " | Broker: " + brokerTime12hr + " | CST: " + cstTime12hr);
         return false;
     }
     
@@ -107,7 +161,11 @@ bool ValidateSymbol()
     // Log if spread is unusually high (warning only)
     if(spread > 30) // 3 pips for 5-digit broker
     {
-        LogTrade("Warning: High spread detected: " + DoubleToString(spread/10, 1) + " pips");
+        string brokerTime12hr = FormatTime12Hour(TimeCurrent());
+        datetime cstTime = GetCSTTime(TimeCurrent());
+        string cstTime12hr = FormatTime12Hour(cstTime);
+        LogTrade("Warning: High spread detected: " + DoubleToString(spread/10, 1) + " pips" + 
+                " | Broker: " + brokerTime12hr + " | CST: " + cstTime12hr);
     }
     
     return true;

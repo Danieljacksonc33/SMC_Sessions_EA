@@ -85,7 +85,7 @@ bool CanTradeMultiPair(int magicNumber)
         if(TimeCurrent() - lastLog > 3600)
         {
             string pairsList = "";
-            for(int i = 0; i < currentPairs; i++)
+            for(int k = 0; k < currentPairs; k++)
             {
                 // Get first trade for each pair to show which pairs are trading
                 for(int j = OrdersTotal() - 1; j >= 0; j--)
@@ -148,10 +148,10 @@ string GetTradingPairsList(int magicNumber)
     }
     
     // Build comma-separated list
-    for(int i = 0; i < pairCount; i++)
+    for(int k = 0; k < pairCount; k++)
     {
-        if(i > 0) pairsList += ", ";
-        pairsList += tradingPairs[i];
+        if(k > 0) pairsList += ", ";
+        pairsList += tradingPairs[k];
     }
     
     if(pairsList == "") pairsList = "None";

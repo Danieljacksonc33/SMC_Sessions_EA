@@ -60,6 +60,9 @@ double GetATR(int period = 14)
 // Check if volatility is acceptable (not too low, not too high)
 bool IsVolatilityAcceptable()
 {
+    // If market filter is disabled, skip volatility check
+    if(!g_EnableMarketFilter) return true;
+    
     double atr = GetATR(g_ATR_Period);
     double point = Point;
     

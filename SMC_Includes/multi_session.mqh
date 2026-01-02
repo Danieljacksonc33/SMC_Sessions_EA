@@ -90,12 +90,14 @@ bool IsAnyTradingSession()
         // Handle sessions that cross midnight
         if(start < end)
         {
-            if(hour >= start && hour < end)
+            // Include end hour in the range (e.g., 2-5 means 2:00 to 5:59:59)
+            if(hour >= start && hour <= end)
                 return true;
         }
         else // Session crosses midnight (e.g., 22-2)
         {
-            if(hour >= start || hour < end)
+            // For midnight-crossing sessions, include both start and end hours
+            if(hour >= start || hour <= end)
                 return true;
         }
     }
@@ -118,11 +120,13 @@ string GetCurrentSessionName()
         bool inSession = false;
         if(start < end)
         {
-            inSession = (hour >= start && hour < end);
+            // Include end hour in the range (e.g., 2-5 means 2:00 to 5:59:59)
+            inSession = (hour >= start && hour <= end);
         }
         else
         {
-            inSession = (hour >= start || hour < end);
+            // For midnight-crossing sessions, include both start and end hours
+            inSession = (hour >= start || hour <= end);
         }
         
         if(inSession)
