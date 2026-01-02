@@ -203,6 +203,79 @@ void ExportDashboardData()
     json += "    \"blocking\": " + (newsBlocking ? "true" : "false") + "\n";
     json += "  },\n";
     
+    // Trade History - Recent closed trades
+    json += "  \"tradeHistory\": [\n";
+    int historyTotal = OrdersHistoryTotal();
+    int tradeCount = 0;
+    int maxTradesToShow = 20; // Show last 20 trades
+    int bullishWins = 0, bullishLosses = 0;
+    int bearishWins = 0, bearishLosses = 0;
+    
+    // Loop through history from most recent to oldest
+    for(int i = historyTotal - 1; i >= 0 && tradeCount < maxTradesToShow; i--)
+    {
+        if(OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))
+        {
+            // Only include trades for this symbol and magic number
+            if(OrderSymbol() == Symbol() && OrderMagicNumber() == MagicNumber)
+            {
+                if(tradeCount > 0) json += ",\n";
+                
+                string orderType = (OrderType() == OP_BUY) ? "BULLISH" : "BEARISH";
+                double profit = OrderProfit() + OrderSwap() + OrderCommission();
+                bool isWin = (profit > 0);
+                
+                // Count wins/losses by type
+                if(OrderType() == OP_BUY)
+                {
+                    if(isWin) bullishWins++;
+                    else bullishLosses++;
+                }
+                else
+                {
+                    if(isWin) bearishWins++;
+                    else bearishLosses++;
+                }
+                
+                // Calculate profit in pips
+                double profitPips = 0;
+                double point = Point;
+                if(OrderType() == OP_BUY)
+                    profitPips = (OrderClosePrice() - OrderOpenPrice()) / point / 10;
+                else if(OrderType() == OP_SELL)
+                    profitPips = (OrderOpenPrice() - OrderClosePrice()) / point / 10;
+                
+                json += "    {\n";
+                json += "      \"ticket\": " + IntegerToString(OrderTicket()) + ",\n";
+                json += "      \"type\": \"" + orderType + "\",\n";
+                json += "      \"openTime\": \"" + TimeToString(OrderOpenTime(), TIME_DATE|TIME_MINUTES) + "\",\n";
+                json += "      \"closeTime\": \"" + TimeToString(OrderCloseTime(), TIME_DATE|TIME_MINUTES) + "\",\n";
+                json += "      \"openPrice\": " + DoubleToString(OrderOpenPrice(), 5) + ",\n";
+                json += "      \"closePrice\": " + DoubleToString(OrderClosePrice(), 5) + ",\n";
+                json += "      \"profit\": " + DoubleToString(profit, 2) + ",\n";
+                json += "      \"profitPips\": " + DoubleToString(profitPips, 1) + ",\n";
+                json += "      \"isWin\": " + (isWin ? "true" : "false") + "\n";
+                json += "    }";
+                
+                tradeCount++;
+            }
+        }
+    }
+    json += "\n  ],\n";
+    
+    // Trade History Summary
+    json += "  \"tradeHistorySummary\": {\n";
+    json += "    \"totalTrades\": " + IntegerToString(tradeCount) + ",\n";
+    json += "    \"bullishWins\": " + IntegerToString(bullishWins) + ",\n";
+    json += "    \"bullishLosses\": " + IntegerToString(bullishLosses) + ",\n";
+    json += "    \"bearishWins\": " + IntegerToString(bearishWins) + ",\n";
+    json += "    \"bearishLosses\": " + IntegerToString(bearishLosses) + ",\n";
+    int totalWins = bullishWins + bearishWins;
+    int totalLosses = bullishLosses + bearishLosses;
+    json += "    \"totalWins\": " + IntegerToString(totalWins) + ",\n";
+    json += "    \"totalLosses\": " + IntegerToString(totalLosses) + "\n";
+    json += "  },\n";
+    
     // Current price
     json += "  \"price\": {\n";
     json += "    \"bid\": " + DoubleToString(Bid, 5) + ",\n";
